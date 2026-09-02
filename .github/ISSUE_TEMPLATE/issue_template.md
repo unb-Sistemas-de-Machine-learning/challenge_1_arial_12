@@ -1,3 +1,11 @@
+---
+name: "Issue Template"
+about: "Template para Histórias de Usuário e Issues Técnicas"
+title: ""
+labels: ''
+assignees: ''
+---
+
 ## Descrição
 
 <!--- 
