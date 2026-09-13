@@ -5,3 +5,4 @@
 - [Políticas de Commit e Branches](/pages/politicas_repositorio.md)
 - [Identidade Visual](/pages/style_guidelines.md)
 - [Protótipo de Alta Fidelidade](/pages/prototipo.md)
+- [Arquitetura](/pages/arquitetura.md)
