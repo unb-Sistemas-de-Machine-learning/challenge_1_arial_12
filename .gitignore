@@ -4,17 +4,29 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+env/
 .pytest_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 
-# Ambiente
+# Node / extensão
+node_modules/
+.output/
+.wxt/
+stats.html
+
+# Variáveis de ambiente / segredos
 .env
-.env.local
+.env.*
+!.env.example
+
+# Logs
 *.log
 
-# Editores / SO
-.vscode/
-.idea/
+# Sistema operacional / editores
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
