@@ -12,8 +12,8 @@
 
 | Arquivo | O que muda |
 | :--- | :--- |
-| `Backend/src/...` | |
-| `Backend/src/tests/unit/test_....py` | |
+| `verificador/backend/src/...` | |
+| `verificador/backend/src/tests/unit/test_....py` | |
 
 ## 3. Contratos
 

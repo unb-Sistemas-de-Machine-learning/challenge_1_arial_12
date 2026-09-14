@@ -38,7 +38,9 @@ challenge_1_arial_12/
 │       ├── spec.md
 │       ├── plan.md
 │       └── tasks.md
-├── Backend/                   # o código, derivado das specs
+├── verificador/
+│   ├── backend/               # o código, derivado das specs
+│   └── extensao/              # extensão de navegador
 └── docs/                      # site publicado (docsify)
 ```
 
@@ -48,7 +50,7 @@ entrega. A pasta `docs/` guarda a documentação estável do produto e do proces
 publicada pelo docsify.
 
 Os datasets de avaliação dos agentes de IA **não** ficam aqui: eles são dado de
-teste e moram em `Backend/evals/`, versionados junto do código. A spec apenas
+teste e moram em `verificador/backend/evals/`, versionados junto do código. A spec apenas
 aponta para o arquivo e define a meta.
 
 ---
@@ -196,7 +198,7 @@ vira `assert`. Separe as duas naturezas na seção 5 do template:
   lugar do LLM.
 - **O que é probabilístico** — a qualidade do resultado. O critério de aceite
   aqui não é um teste, é um **eval set**: um conjunto de casos reais rotulados
-  à mão pela equipe (`Backend/evals/<agente>.jsonl`), com uma meta de acerto e
+  à mão pela equipe (`verificador/backend/evals/<agente>.jsonl`), com uma meta de acerto e
   uma lista de erros inaceitáveis.
 
 Vale montar o eval set cedo, mesmo pequeno. Sem ele, não há como afirmar que

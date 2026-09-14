@@ -57,7 +57,7 @@
 
 **Probabilístico** (vira eval set):
 
-- **Dataset:** `Backend/evals/<nome>.jsonl`
+- **Dataset:** `verificador/backend/evals/<nome>.jsonl`
 - **Meta:** ex.: acerta ≥ 80% dos casos rotulados
 - **Erro inaceitável:** ex.: nunca classificar como `embasado` sem nenhum
   abstract relacionado
