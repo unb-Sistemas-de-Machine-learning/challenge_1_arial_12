@@ -1,0 +1,25 @@
+services:
+  api:
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: verificador
+      POSTGRES_PASSWORD: verificador
+      POSTGRES_DB: verificador
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
