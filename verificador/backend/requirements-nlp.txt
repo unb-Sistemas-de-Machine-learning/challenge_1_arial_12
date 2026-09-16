@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Clusterizacao dos abstracts. Instalacao pesada (torch, ~2GB), entao fica
+# separada: so precisa disso quem for mexer em services/bertopic_nlp.py.
+bertopic==0.16.4

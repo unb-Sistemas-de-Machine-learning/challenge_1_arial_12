@@ -1,9 +1,14 @@
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
 .venv/
 venv/
 env/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Node / extensão
 node_modules/
@@ -15,6 +20,9 @@ stats.html
 .env
 .env.*
 !.env.example
+
+# Logs
+*.log
 
 # Sistema operacional / editores
 .DS_Store
