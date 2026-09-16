@@ -16,7 +16,13 @@ escrito nela será inventado.
 
 | # | Spec | Status | Branch |
 | :-- | :--- | :--- | :--- |
-| — | _nenhuma spec criada ainda_ | — | — |
+| 001 | [Agente Pesquisador com busca autônoma na OpenAlex](001-agente-pesquisador/spec.md) | rascunho | `feature/001-agente-pesquisador` |
+| 002 | [Esteira de agentes: contrato ponta a ponta](002-esteira-de-agentes/spec.md) | rascunho | `feature/002-esteira-de-agentes` |
+| 003 | [Feedback do usuário e taxa de aceitação](003-feedback-do-usuario/spec.md) | rascunho | `feature/003-feedback-do-usuario` |
+| 004 | [Agente Triador: portão de economia e canonização](004-agente-triador/spec.md) | rascunho | `feature/004-agente-triador` |
+| 005 | [Ferramenta MCP de busca na OpenAlex](005-ferramenta-mcp-openalex/spec.md) | rascunho | `feature/005-ferramenta-mcp-openalex` |
+| 006 | [BERTopic: redução de ruído e seleção da amostra](006-bertopic/spec.md) | rascunho | `feature/006-bertopic` |
+| 007 | [Agente Juiz: veredito e justificativa](007-agente-juiz/spec.md) | rascunho | `feature/007-agente-juiz` |
 
 **Status possíveis:** `rascunho` → `em revisão` → `aprovada` → `implementada`.
 Uma spec que morreu no caminho vira `abandonada`, mas **continua na tabela** e
