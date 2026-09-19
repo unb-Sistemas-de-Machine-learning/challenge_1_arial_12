@@ -44,7 +44,10 @@ def verificar(
         openapi_examples={
             "trecho_selecionado": {
                 "summary": "Texto selecionado na extensão",
-                "value": {"trecho": "A polilaminina vai revolucionar o tratamento.", "url": "file:///pagina-teste.html"},
+                "value": {
+                    "trecho": "A polilaminina vai revolucionar o tratamento.",
+                    "url": "file:///pagina-teste.html",
+                },
             }
         }
     ),

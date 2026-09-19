@@ -1,8 +1,8 @@
 # Tarefas — 010 Contrato de verificação entre extensão e backend
 
-> A implementação automatizada foi antecipada com autorização do usuário. A revisão da spec, integração com a #7 e verificação manual ainda estão pendentes. Marcar cada item somente após sua verificação.
+> A implementação automatizada foi antecipada com autorização do usuário. A revisão da spec e a verificação manual ainda estão pendentes. Marcar cada item somente após sua verificação.
 
-- [ ] 1. Integrar a fábrica mínima à aplicação definitiva da #7 quando ela estiver disponível.
+- [x] 1. Integrar a fábrica mínima à aplicação definitiva da #7.
 - [x] 2. Registrar o payload literal de `backend/main.py` como fixture da Fase 01.
 - [x] 3. Criar testes unitários dos modelos de entrada, veredicto e enum.
 - [x] 4. Criar testes que detectem divergências de campos com `extensao/tipos.ts`.

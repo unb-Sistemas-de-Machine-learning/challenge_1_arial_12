@@ -1,22 +1,26 @@
-"""Ponto de entrada da API do Verificador Científico."""
+"""Fábrica e ponto de entrada ASGI da API."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.gateway.routes import router
+from src.api.gateway import router
+from src.core.config.settings import get_settings
 
 
-def create_app() -> FastAPI:
-    app = FastAPI(title="Verificador Científico")
-    # Mantém a política do stub; as origens da extensão variam entre navegadores.
-    app.add_middleware(
+def criar_app() -> FastAPI:
+    settings = get_settings()
+    api = FastAPI(
+        title="Verificador Científico", version="0.1.0", debug=settings.app_debug
+    )
+    api.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.cors_origins,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.include_router(router)
-    return app
+    api.include_router(router)
+    return api
 
 
-app = create_app()
+create_app = criar_app
+app = criar_app()

@@ -1,10 +1,10 @@
 # Plano — 010 Contrato de verificação entre extensão e backend
 
-> Implementação automatizada realizada para validação. A integração com a aplicação definitiva da #7 e o roteiro manual da extensão ainda estão pendentes.
+> Implementação automatizada integrada à aplicação da #7. O roteiro manual da extensão ainda está pendente.
 
 ## 1. Abordagem
 
-Preservar o JSON exato do stub como fixture antes de substituí-lo. Definir modelos Pydantic equivalentes às interfaces da extensão e expor `POST /verificar` com `response_model`, mantendo o veredicto fixo. Registrar `GET /health` em uma fábrica mínima de aplicação, sem inicializar ou consultar o banco nessa rota. Após os testes de contrato e integração, migrar os pontos de entrada e retirar o stub antigo. Integrar essa fábrica à aplicação definitiva da #7 quando ela estiver disponível.
+Preservar o JSON exato do stub como fixture antes de substituí-lo. Definir modelos Pydantic equivalentes às interfaces da extensão e expor `POST /verificar` com `response_model`, mantendo o veredicto fixo. Reutilizar `GET /health` e a fábrica de aplicação da #7, sem consultar o banco nessa rota. Após os testes de contrato e integração, retirar o stub antigo.
 
 Os tamanhos mínimo e máximo de `trecho` e o tamanho máximo de `justificativa` permanecem **indefinidos**; não adicionar limites de comprimento nesta entrega. <!-- TODO: revisar a spec, os testes e este plano quando os limites forem definidos. -->
 
@@ -14,7 +14,7 @@ Os tamanhos mínimo e máximo de `trecho` e o tamanho máximo de `justificativa`
 | :--- | :--- |
 | `verificador/backend/src/api/schemas/verificacao.py` | Modelos `Pedido`, `Estudo`, `Veredito` e enum `Estado` |
 | `verificador/backend/src/api/gateway/routes.py` | Rotas `/verificar` e `/health`, exemplos OpenAPI |
-| `verificador/backend/src/main.py` | Fábrica mínima com as rotas, sem conexão obrigatória ao banco; integração posterior com #7 |
+| `verificador/backend/src/main.py` | Fábrica da #7 com as rotas, configuração centralizada e sem conexão obrigatória ao banco |
 | `verificador/backend/src/tests/fixtures/veredito_fase01.json` | Cópia do payload legado antes de remover o stub |
 | `verificador/backend/src/tests/unit/test_contrato_verificacao.py` | Validação dos modelos e paridade com `tipos.ts` |
 | `verificador/backend/src/tests/integration/test_rotas_verificacao.py` | Requisições HTTP, OpenAPI, fixture e saúde sem banco |
@@ -66,7 +66,7 @@ Saída de `POST /verificar` (HTTP 200):
 
 ## 6. Riscos
 
-- **Dependência #7 ausente:** a fábrica mínima desta entrega precisa ser integrada à aplicação definitiva quando a #7 estiver disponível, sem duplicar a inicialização.
+- **Dependência #7 integrada:** manter a inicialização por `get_settings()` e executar os testes sem `.env` real por injeção de configuração.
 - **Teste de paridade frágil:** isolar a leitura de `tipos.ts` e usar exemplos de mudança de campo/enum para provar que o teste falha quando deve.
 - **Mudança do JSON fixo:** capturar a fixture antes de retirar `backend/main.py` e comparar a resposta completa, inclusive campos aninhados.
 - **Compatibilidade da extensão:** não alterar `tipos.ts` nem exigir rebuild no roteiro manual.

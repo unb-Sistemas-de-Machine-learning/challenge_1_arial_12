@@ -4,8 +4,8 @@
 | :------------- | :----------------------------------------------------------------- |
 | **Status**     | em revisão                                                         |
 | **Autor**      | Bruno Ricardo de Menezes                                           |
-| **Branch**     | `feature/010-contrato-verificacao`                                 |
-| **Depende de** | `#7` — integração com a aplicação definitiva ainda pendente        |
+| **Branch**     | `feature/010-rota-verificar-health`                                 |
+| **Depende de** | `#7` — integrada nesta branch                                       |
 
 ---
 
@@ -28,7 +28,7 @@ Como essas definições não são verificadas entre si, o backend pode alterar c
 
 Esta spec formaliza esse contrato no backend por meio de modelos validados e o publica no OpenAPI da aplicação.
 
-As rotas `POST /verificar` e `GET /health` passam a fazer parte da aplicação em `src/main.py`. O stub da Fase 01 usava `/saude`; a migração para `/health` faz parte desta feature. A integração com a aplicação definitiva da task **#7** continua pendente.
+As rotas `POST /verificar` e `GET /health` passam a fazer parte da aplicação em `src/main.py`. A rota `/health` foi padronizada na task **#7**; esta feature migra `/verificar` para o gateway e integra a fábrica de aplicação daquela task.
 
 Nesta etapa, `/verificar` continua retornando o mesmo veredicto fixo utilizado pelo stub. A substituição do mock por aquisição e análise real de evidências pertence a etapas posteriores.
 
@@ -127,3 +127,4 @@ Esta feature não utiliza LLM nem possui comportamento probabilístico. Todas as
 | 2026-09-18 | Alinha a obrigatoriedade de `ano` e `doi` ao contrato TypeScript da extensão |
 | 2026-09-18 | Implementação automatizada concluída; mantém revisão da spec, integração com #7 e teste manual pendentes |
 | 2026-09-18 | Renumera a entrega para feat 10 (spec 010) |
+| 2026-09-19 | Integra a fábrica e o Compose da task #7; preserva `/verificar` no gateway e remove o stub legado |

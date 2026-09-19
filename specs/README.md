@@ -16,7 +16,9 @@ escrito nela será inventado.
 
 | # | Spec | Status | Branch |
 | :-- | :--- | :--- | :--- |
-| 010 | [Contrato de verificação + healthcheck](010-contrato-verificacao-healthcheck/spec.md) | em revisão | `feature/010-contrato-verificacao` (a criar) |
+| 006 | [Configuração centralizada do backend](006-configuracao-centralizada/spec.md) | em revisão | `feature/006-configuracao-centralizada` |
+| 007 | [Inicialização da API pelo Docker Compose](007-app-fastapi-compose/spec.md) | implementada | `feature/007-app-fastapi-compose` |
+| 010 | [Contrato de verificação + healthcheck](010-contrato-verificacao-healthcheck/spec.md) | em revisão | `feature/010-rota-verificar-health` |
 
 **Status possíveis:** `rascunho` → `em revisão` → `aprovada` → `implementada`.
 Uma spec que morreu no caminho vira `abandonada`, mas **continua na tabela** e

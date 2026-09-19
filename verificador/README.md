@@ -18,6 +18,7 @@ da página visitada — muitos sites bloqueiam requisições a `localhost`.
 verificador/
 ├── backend/
 │   ├── src/main.py        # aplicação FastAPI: POST /verificar; GET /health
+│   ├── docker-compose.yml # api + db; inicia src.main:app
 │   ├── requirements.txt
 │   └── .venv/             # criado localmente
 ├── extensao/
@@ -32,7 +33,7 @@ verificador/
 ## Pré-requisitos
 
 - Node 20+ e npm — **ok** (Node 26.3.1)
-- Python 3.12 — versão usada no Docker; as dependências fixadas podem não instalar no Python 3.14
+- Python 3.12 para o venv — é a versão da imagem Docker e suporta as dependências fixadas
 - **Firefox** — ✅ instalado (154.0.1, via `brew install --cask firefox`)
 - **Chrome** — não instalado. Se quiser testar nele também:
   `brew install --cask google-chrome`
@@ -44,10 +45,32 @@ O Safari também é possível, mas exige o Xcode completo — ver
 
 ## Como rodar
 
-### 1. Back-end (terminal 1)
+### 1A. API por Docker Compose
 
 ```bash
 cd verificador/backend
+cp .env.example .env                      # só na primeira vez; ajuste os valores para seu ambiente
+docker compose up --build
+```
+
+O Compose sobe `api` e `db`. Em outro terminal, verifique a aplicação:
+
+```bash
+curl http://localhost:8000/health
+```
+
+A resposta esperada é `{"ok":true}`. O serviço `api` executa `src.main:app`,
+que também expõe `POST /verificar`. Sem `.env` e sem `DATABASE_URL` no ambiente,
+o Compose ainda inicia o `db`, mas a API encerra na inicialização com erro que
+identifica `DATABASE_URL`.
+
+### 1B. API por venv (alternativa ao Compose)
+
+Pare o Compose antes de iniciar o Uvicorn local, pois ambos usam a porta 8000.
+
+```bash
+cd verificador/backend
+cp .env.example .env                      # só na primeira vez; ajuste os valores para seu ambiente
 python3 -m venv .venv                    # só na primeira vez
 ./.venv/bin/pip install -r requirements.txt
 ./.venv/bin/uvicorn src.main:app --reload --port 8000
@@ -64,8 +87,15 @@ curl -X POST http://localhost:8000/verificar \
 Deve voltar o JSON mock. **Só avance quando isso funcionar.**
 
 O healthcheck responde em `http://localhost:8000/health` com `{"ok":true}`.
+O backend lê `.env` na inicialização. `DATABASE_URL` precisa estar preenchida,
+mas o healthcheck não conecta ao banco; `OPENAI_API_KEY` e `OPENALEX_MAILTO` podem ficar
+vazios nesta fase. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
+mantém `['*']`.
 
 ### 2. Extensão (terminal 2)
+
+Inicie a API pelo Compose (passo 1A) ou pelo venv (passo 1B) antes de testar a
+extensão. Ambos expõem `/verificar` e `/health`.
 
 ```bash
 cd verificador/extensao
@@ -231,7 +261,7 @@ Depois volte ao Xcode e dê ⌘R. Não precisa reconverter.
 | **Failed to fetch** só no Safari | o Safari é mais rígido com `localhost`; confirme que o uvicorn está de pé e teste `http://127.0.0.1:8000/health` no próprio Safari |
 | `xcrun: error: unable to find utility` | Xcode não instalado ou `xcode-select` apontando para as CLT |
 
-## O que a Fase 02 encosta
+## Próxima migração
 
 As próximas etapas substituem o veredicto fixo em `backend/src/api/gateway/routes.py`
 por aquisição e análise de evidências reais.

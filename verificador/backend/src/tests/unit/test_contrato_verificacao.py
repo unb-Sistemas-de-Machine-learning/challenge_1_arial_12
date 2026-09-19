@@ -18,7 +18,10 @@ def _interface_fields(source: str, name: str) -> dict[str, str]:
 
 
 def test_pedido_aceita_url_file_e_sem_url() -> None:
-    assert Pedido(trecho="texto", url="file:///pagina-teste.html").url == "file:///pagina-teste.html"
+    assert (
+        Pedido(trecho="texto", url="file:///pagina-teste.html").url
+        == "file:///pagina-teste.html"
+    )
     assert Pedido(trecho="texto").url is None
 
 
@@ -32,10 +35,19 @@ def test_pedido_exige_trecho_string_sem_limite_de_comprimento_definido() -> None
 
 
 def test_estado_aceita_apenas_os_tres_valores_do_contrato() -> None:
-    assert {estado.value for estado in Estado} == {"sustenta", "exagera", "nada_encontrado"}
+    assert {estado.value for estado in Estado} == {
+        "sustenta",
+        "exagera",
+        "nada_encontrado",
+    }
     with pytest.raises(ValidationError):
         Veredito.model_validate(
-            {"estado": "desconhecido", "estudo": None, "termos": [], "justificativa": "teste"}
+            {
+                "estado": "desconhecido",
+                "estudo": None,
+                "termos": [],
+                "justificativa": "teste",
+            }
         )
 
 
@@ -47,7 +59,12 @@ def test_estudo_aceita_null_mas_exige_campos_presentes() -> None:
 
 
 def test_veredito_aceita_estudo_null() -> None:
-    veredito = Veredito(estado=Estado.NADA_ENCONTRADO, estudo=None, termos=[], justificativa="Sem estudo")
+    veredito = Veredito(
+        estado=Estado.NADA_ENCONTRADO,
+        estudo=None,
+        termos=[],
+        justificativa="Sem estudo",
+    )
     assert veredito.model_dump(mode="json")["estudo"] is None
 
 
