@@ -1,4 +1,4 @@
-# Verificador Científico — Fase 01 (encanamento ponta a ponta)
+# Verificador Científico — contrato de verificação (spec 010)
 
 Prova o circuito completo **sem IA e sem OpenAlex**:
 seleção de texto → botão → background → back-end → veredito mock → painel.
@@ -17,7 +17,7 @@ da página visitada — muitos sites bloqueiam requisições a `localhost`.
 ```
 verificador/
 ├── backend/
-│   ├── main.py            # POST /verificar → mock fixo; GET /saude
+│   ├── src/main.py        # aplicação FastAPI: POST /verificar; GET /health
 │   ├── requirements.txt
 │   └── .venv/             # criado localmente
 ├── extensao/
@@ -32,7 +32,7 @@ verificador/
 ## Pré-requisitos
 
 - Node 20+ e npm — **ok** (Node 26.3.1)
-- Python 3.11+ — **ok** (3.14.6)
+- Python 3.12 — versão usada no Docker; as dependências fixadas podem não instalar no Python 3.14
 - **Firefox** — ✅ instalado (154.0.1, via `brew install --cask firefox`)
 - **Chrome** — não instalado. Se quiser testar nele também:
   `brew install --cask google-chrome`
@@ -50,7 +50,7 @@ O Safari também é possível, mas exige o Xcode completo — ver
 cd verificador/backend
 python3 -m venv .venv                    # só na primeira vez
 ./.venv/bin/pip install -r requirements.txt
-./.venv/bin/uvicorn main:app --reload --port 8000
+./.venv/bin/uvicorn src.main:app --reload --port 8000
 ```
 
 Confira isolado, antes de mexer na extensão:
@@ -62,6 +62,8 @@ curl -X POST http://localhost:8000/verificar \
 ```
 
 Deve voltar o JSON mock. **Só avance quando isso funcionar.**
+
+O healthcheck responde em `http://localhost:8000/health` com `{"ok":true}`.
 
 ### 2. Extensão (terminal 2)
 
@@ -226,10 +228,11 @@ Depois volte ao Xcode e dê ⌘R. Não precisa reconverter.
 |---|---|
 | Extensão sumiu da lista | *Permitir Extensões Não Assinadas* desligou no restart |
 | Botão não aparece em site nenhum | acesso a sites está em *Perguntar*; mude para *Permitir em Todos os Sites* |
-| **Failed to fetch** só no Safari | o Safari é mais rígido com `localhost`; confirme que o uvicorn está de pé e teste `http://127.0.0.1:8000/saude` no próprio Safari |
+| **Failed to fetch** só no Safari | o Safari é mais rígido com `localhost`; confirme que o uvicorn está de pé e teste `http://127.0.0.1:8000/health` no próprio Safari |
 | `xcrun: error: unable to find utility` | Xcode não instalado ou `xcode-select` apontando para as CLT |
 
 ## O que a Fase 02 encosta
 
-Só o `backend/main.py`: troca o mock por uma busca real no OpenAlex.
+As próximas etapas substituem o veredicto fixo em `backend/src/api/gateway/routes.py`
+por aquisição e análise de evidências reais.
 A extensão **não muda** — é a prova de que o contrato JSON está bem definido.
