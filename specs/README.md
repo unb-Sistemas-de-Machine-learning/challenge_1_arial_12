@@ -16,7 +16,8 @@ escrito nela será inventado.
 
 | # | Spec | Status | Branch |
 | :-- | :--- | :--- | :--- |
-| — | _nenhuma spec criada ainda_ | — | — |
+| 006 | [Configuração centralizada do backend](006-configuracao-centralizada/spec.md) | em revisão | `feature/006-configuracao-centralizada` |
+| 007 | [Inicialização da API pelo Docker Compose](007-app-fastapi-compose/spec.md) | implementada | `feature/007-app-fastapi-compose` |
 
 **Status possíveis:** `rascunho` → `em revisão` → `aprovada` → `implementada`.
 Uma spec que morreu no caminho vira `abandonada`, mas **continua na tabela** e
@@ -209,12 +210,12 @@ só dá esse sinal depois que o produto já está na mão do usuário.
 
 ## Sugestão de ordem das primeiras specs
 
-| # | Feature | Por que nessa ordem |
+| Ordem sugerida | Feature | Por que nessa ordem |
 | :-- | :--- | :--- |
-| 001 | Contrato de verificação + healthcheck | destrava o time da extensão com um veredicto fixo |
-| 002 | Busca na OpenAlex | integração real, ainda sem LLM |
-| 003 | Agente Triador | primeira spec com eval set |
-| 004 | Agente Juiz | define com precisão as categorias de classificação |
-| 005 | Cache de buscas | mensurável: taxa de hit e latência |
-| 006 | Clusterização com BERTopic | otimização de custo, justificada por número |
-| 007 | Feedback e taxa de aceitação | fecha o ciclo de métrica do produto |
+| 1 | Contrato de verificação + healthcheck | destrava o time da extensão com um veredicto fixo |
+| 2 | Busca na OpenAlex | integração real, ainda sem LLM |
+| 3 | Agente Triador | primeira spec com eval set |
+| 4 | Agente Juiz | define com precisão as categorias de classificação |
+| 5 | Cache de buscas | mensurável: taxa de hit e latência |
+| 6 | Clusterização com BERTopic | otimização de custo, justificada por número |
+| 7 | Feedback e taxa de aceitação | fecha o ciclo de métrica do produto |
