@@ -48,6 +48,7 @@ O Safari também é possível, mas exige o Xcode completo — ver
 
 ```bash
 cd verificador/backend
+cp .env.example .env                      # só na primeira vez; ajuste os valores para seu ambiente
 python3 -m venv .venv                    # só na primeira vez
 ./.venv/bin/pip install -r requirements.txt
 ./.venv/bin/uvicorn main:app --reload --port 8000
@@ -62,6 +63,11 @@ curl -X POST http://localhost:8000/verificar \
 ```
 
 Deve voltar o JSON mock. **Só avance quando isso funcionar.**
+
+O backend lê `.env` na inicialização. `DATABASE_URL` precisa estar preenchida,
+mas o stub não conecta ao banco; `OPENAI_API_KEY` e `OPENALEX_MAILTO` podem ficar
+vazios nesta fase. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
+mantém `['*']`.
 
 ### 2. Extensão (terminal 2)
 
