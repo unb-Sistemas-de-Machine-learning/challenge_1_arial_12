@@ -8,14 +8,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="Verificador Cientifico — stub Fase 01")
+from src.core.config.settings import get_settings
 
-# Em desenvolvimento liberamos tudo: a origem da extensao muda entre
+settings = get_settings()
+app = FastAPI(title="Verificador Cientifico — stub Fase 01", debug=settings.app_debug)
+
+# Por padrao liberamos tudo: a origem da extensao muda entre
 # chrome-extension://<id> e moz-extension://<uuid>, e o uuid do Firefox
 # e diferente a cada perfil.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
