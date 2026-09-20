@@ -15,11 +15,12 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         hide_input_in_errors=True,
+        populate_by_name=True,
     )
 
     app_debug: bool = False
     openai_api_key: SecretStr | None = None
-    database_url: SecretStr
+    database_url: SecretStr = Field(validation_alias="DATABASE_URL")
     openalex_mailto: str | None = None
     cors_origins: list[str] = Field(default_factory=lambda: ["*"])
 

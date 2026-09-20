@@ -29,8 +29,8 @@ class Pedido(BaseModel):
     url: str | None = None
 
 
-@app.get("/saude")
-def saude():
+@app.get("/health")
+def health():
     return {"ok": True}
 
 

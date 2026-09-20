@@ -45,7 +45,7 @@ def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(monkeypatch, capsys, 
     assert app.debug is True
 
     with TestClient(app) as client:
-        health = client.get("/saude")
+        health = client.get("/health")
         assert health.json() == {"ok": True}
         verification = client.post("/verificar", json={"trecho": "Uma alegação de teste"})
         assert verification.status_code == 200
