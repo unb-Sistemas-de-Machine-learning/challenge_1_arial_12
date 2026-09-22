@@ -30,7 +30,7 @@ def test_criar_app_monta_gateway_sem_rotas_de_negocio(monkeypatch) -> None:
     module = load_app_module()
     assert isinstance(module.app, FastAPI)
     assert module.app.title == "Verificador Científico"
-    assert module.app.version == "0.1.0"
+    assert module.app.version == "9.9.9-quebra-proposital"
     assert module.app.debug is True
     assert "/health" in {route.path for route in module.app.routes}
     assert "/saude" not in {route.path for route in module.app.routes}
