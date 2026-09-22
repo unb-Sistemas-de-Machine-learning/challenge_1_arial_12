@@ -34,7 +34,9 @@ class Settings(BaseSettings):
 
     @field_validator("openai_api_key", "openalex_mailto", mode="before")
     @classmethod
-    def optional_blank_as_none(cls, value: str | SecretStr | None) -> str | SecretStr | None:
+    def optional_blank_as_none(
+        cls, value: str | SecretStr | None
+    ) -> str | SecretStr | None:
         raw_value = value.get_secret_value() if isinstance(value, SecretStr) else value
         if isinstance(raw_value, str) and not raw_value.strip():
             return None

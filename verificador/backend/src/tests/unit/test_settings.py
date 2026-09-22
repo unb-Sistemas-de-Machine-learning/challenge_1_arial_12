@@ -71,7 +71,12 @@ def test_segredos_nao_aparecem_em_repr_ou_erro() -> None:
     assert "senha-super-secreta" not in repr(settings)
 
     with pytest.raises(ValidationError) as error:
-        Settings(_env_file=None, openai_api_key=key, database_url=database_url, app_debug="invalido")
+        Settings(
+            _env_file=None,
+            openai_api_key=key,
+            database_url=database_url,
+            app_debug="invalido",
+        )
     assert key not in str(error.value)
     assert database_url not in str(error.value)
 
@@ -79,7 +84,7 @@ def test_segredos_nao_aparecem_em_repr_ou_erro() -> None:
 def test_env_file_e_sobrescrita_por_ambiente(tmp_path: Path, monkeypatch) -> None:
     env_file = tmp_path / ".env"
     env_file.write_text(
-        'APP_DEBUG=true\nDATABASE_URL=postgresql+asyncpg://db/original\n'
+        "APP_DEBUG=true\nDATABASE_URL=postgresql+asyncpg://db/original\n"
         'CORS_ORIGINS=["https://arquivo.example"]\n',
         encoding="utf-8",
     )

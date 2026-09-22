@@ -22,16 +22,24 @@ def load_stub_app():
 
 
 @pytest.mark.parametrize("database_url", [None, "", "   "])
-def test_app_falha_na_inicializacao_sem_database_url(monkeypatch, database_url: str | None) -> None:
+def test_app_falha_na_inicializacao_sem_database_url(
+    monkeypatch, database_url: str | None
+) -> None:
     monkeypatch.delenv("DATABASE_URL", raising=False)
     values = {} if database_url is None else {"database_url": database_url}
-    monkeypatch.setattr(settings_module, "get_settings", lambda: Settings(_env_file=None, **values))
+    monkeypatch.setattr(
+        settings_module, "get_settings", lambda: Settings(_env_file=None, **values)
+    )
     with pytest.raises(ValidationError):
         load_stub_app()
 
 
-def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(monkeypatch, capsys, caplog) -> None:
-    database_url = "postgresql+asyncpg://usuario:senha-super-secreta@host-inexistente/verificador"
+def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(
+    monkeypatch, capsys, caplog
+) -> None:
+    database_url = (
+        "postgresql+asyncpg://usuario:senha-super-secreta@host-inexistente/verificador"
+    )
     api_key = "sk-chave-super-secreta"
     custom = Settings(
         _env_file=None,
@@ -47,7 +55,9 @@ def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(monkeypatch, capsys, 
     with TestClient(app) as client:
         health = client.get("/health")
         assert health.json() == {"ok": True}
-        verification = client.post("/verificar", json={"trecho": "Uma alegação de teste"})
+        verification = client.post(
+            "/verificar", json={"trecho": "Uma alegação de teste"}
+        )
         assert verification.status_code == 200
         permitted = client.options(
             "/verificar",
@@ -65,10 +75,19 @@ def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(monkeypatch, capsys, 
         )
 
     assert permitted.status_code == 200
-    assert permitted.headers["access-control-allow-origin"] == "https://permitida.example"
+    assert (
+        permitted.headers["access-control-allow-origin"] == "https://permitida.example"
+    )
     assert denied.status_code == 400
     assert "access-control-allow-origin" not in denied.headers
     output = capsys.readouterr()
-    exposed = output.out + output.err + caplog.text + health.text + verification.text + permitted.text
+    exposed = (
+        output.out
+        + output.err
+        + caplog.text
+        + health.text
+        + verification.text
+        + permitted.text
+    )
     assert api_key not in exposed
     assert database_url not in exposed
