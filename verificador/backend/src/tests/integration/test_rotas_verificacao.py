@@ -14,7 +14,12 @@ FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "veredito_fase01.js
 
 @pytest.fixture
 def create_app(monkeypatch):
-    custom = Settings(_env_file=None, database_url="url-invalida")
+    custom = Settings(
+        _env_file=None,
+        database_url=(
+            "postgresql+asyncpg://usuario:senha@host-inexistente/verificador"
+        ),
+    )
     monkeypatch.setattr(settings_module, "get_settings", lambda: custom)
     from src.main import criar_app
 

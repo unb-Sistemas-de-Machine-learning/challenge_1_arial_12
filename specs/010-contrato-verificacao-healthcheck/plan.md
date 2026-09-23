@@ -45,7 +45,7 @@ Saída de `POST /verificar` (HTTP 200):
 
 `estado`: `sustenta | exagera | nada_encontrado`; `estudo`: objeto ou `null`; `termos`: lista de strings; `justificativa`: string. Quando há estudo, `titulo` e `retratado` são obrigatórios; `ano` e `doi` também estão presentes, mas aceitam `null`. A fixture deve ser copiada do stub, não reconstruída a partir deste exemplo.
 
-`GET /health` responde HTTP 200 com `{"ok": true}`. A rota não consulta o banco, mesmo com `DATABASE_URL` inválida.
+`GET /health` responde HTTP 200 com `{"ok": true}`. A rota não consulta o banco, mesmo quando `DATABASE_URL` aponta para um host inacessível.
 
 ## 4. Decisões técnicas
 
@@ -60,7 +60,7 @@ Saída de `POST /verificar` (HTTP 200):
 ## 5. Como testar
 
 - **Unitários:** construir modelos válidos e inválidos, incluindo `estado` desconhecido, `estudo=null`, `ano=null` e `doi=null`; comparar campos e enum com `tipos.ts`. Nenhum teste chama a rede.
-- **Integração:** usar cliente de teste local para `POST /verificar`, `GET /health`, `/docs` e `/openapi.json`; comparar o JSON com a fixture; inicializar com `DATABASE_URL` inválida; verificar erro 422 para entrada estruturalmente inválida. Nenhum teste depende de serviços externos.
+- **Integração:** usar cliente de teste local para `POST /verificar`, `GET /health`, `/docs` e `/openapi.json`; comparar o JSON com a fixture; inicializar com `DATABASE_URL` apontando para host inacessível; verificar erro 422 para entrada estruturalmente inválida. Nenhum teste depende de serviços externos.
 - **Manual:** seguir `verificador/README.md` com uma extensão previamente instalada, sem recompilar; conferir veredicto exibido, `POST /verificar` e `GET /health`.
 - **Eval:** não se aplica; não há LLM nesta feature.
 

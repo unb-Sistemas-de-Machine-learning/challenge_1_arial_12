@@ -9,8 +9,11 @@ services:
     volumes:
       - ./src:/app/src:ro
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000
+    # Condicao, e nao apenas "depends_on: db": sem ela o Compose so garante a
+    # ordem de subida, e a api tentaria conectar num Postgres ainda inicializando.
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:16-alpine
@@ -22,6 +25,13 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # pg_isready responde "pronto" so depois que o banco aceita conexao — o
+    # processo subir nao basta, ele ainda inicializa o cluster antes disso.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verificador -d verificador"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:

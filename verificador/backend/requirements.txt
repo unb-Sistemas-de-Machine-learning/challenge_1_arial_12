@@ -12,5 +12,6 @@ httpx==0.28.1
 # Banco de dados
 sqlalchemy[asyncio]==2.0.37
 asyncpg==0.30.0
+alembic==1.14.1
 
 # NLP: o BERTopic fica em requirements-nlp.txt (puxa torch, ~2GB)

@@ -58,7 +58,7 @@ A compatibilidade retroativa é obrigatória: uma extensão já instalada deve c
 }
 ```
 
-9. `GET /health` funciona sem estabelecer conexão com o banco de dados, inclusive quando `DATABASE_URL` contém um valor inválido.
+9. `GET /health` funciona sem estabelecer conexão com o banco de dados, inclusive quando `DATABASE_URL` aponta para um host inacessível.
 
 10. O JSON retornado por `POST /verificar` é idêntico, campo a campo e na mesma estrutura de aninhamento, ao payload produzido pelo stub da Fase 01 e registrado como fixture antes da remoção do stub.
 

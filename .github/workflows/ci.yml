@@ -1,0 +1,97 @@
+name: CI
+
+# Gatilho apenas na main: a branch develop nao existe no repositorio, e os PRs
+# recentes foram mesclados direto na main. Quando a develop for criada, ela
+# precisa ser acrescentada aqui e ter a propria protecao configurada.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Commit novo no mesmo PR cancela a execucao anterior, que ja nao interessa.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Os nomes dos jobs sao contrato: a protecao de branch guarda o nome em texto
+  # ao marcar a verificacao como obrigatoria. Renomear aqui desliga a
+  # obrigatoriedade em silencio.
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Os dois projetos vivem em subpastas; nenhum comando funciona a partir
+        # da raiz do repositorio.
+        working-directory: verificador/backend
+    # Postgres descartavel, so enquanto o job roda. O job so comeca depois que a
+    # verificacao de saude passa. Nao entra no job da extensao, que nao usa banco.
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: verificador
+          POSTGRES_PASSWORD: verificador
+          POSTGRES_DB: verificador
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U verificador -d verificador"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Aqui o banco e alcancado pelo endereco local, e nao pelo nome do
+      # servico como dentro do Compose: o job roda na maquina, nao numa rede
+      # de conteineres junto com ele.
+      DATABASE_URL: postgresql+asyncpg://verificador:verificador@localhost:5432/verificador
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # Mesma versao da imagem Docker: CI que testa em outra versao esconde
+          # justamente o erro que importa.
+          python-version: "3.12"
+          cache: pip
+          # Caminho a partir da raiz do repositorio, e nao do working-directory.
+          # Sem ele a acao procura o arquivo na raiz, nao acha, e o cache
+          # silenciosamente nao acontece.
+          cache-dependency-path: verificador/backend/requirements-dev.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Formatacao
+        run: ruff format --check .
+
+      - name: Testes
+        run: pytest
+
+  extensao:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: verificador/extensao
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: verificador/extensao/package-lock.json
+
+      # npm ci instala exatamente o que esta travado no package-lock e dispara o
+      # postinstall, que gera o .wxt/ — de onde o tsconfig.json herda. Sem esse
+      # passo a checagem de tipos nao tem o que estender.
+      - name: Instalacao limpa
+        run: npm ci
+
+      - name: Checagem de tipos
+        run: npm run compile
