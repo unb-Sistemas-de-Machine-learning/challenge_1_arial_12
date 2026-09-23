@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | :--- | :--- |
-| **Status** | em revisão |
+| **Status** | implementada |
 | **Autor** | a definir |
 | **Branch** | `feature/006-configuracao-centralizada` |
 | **Depende de** | — |
@@ -61,3 +61,4 @@ Nenhuma para o escopo desta spec.
 | 2026-09-18 | Criação da spec 006 a partir da task #6 |
 | 2026-09-18 | Inclui `CORS_ORIGINS`, mantém a porta no Uvicorn e remove decisões sobre features futuras |
 | 2026-09-19 | Implementa a configuração, o uso no stub e os testes; revisão formal pendente |
+| 2026-09-23 | Status corrigido para `implementada`: mesclada pelo PR #22, e o passo 8 do processo manda fechar o ciclo antes do merge |
