@@ -1,0 +1,16 @@
+# Configuracao das ferramentas de lint e teste do backend.
+# Sem metadados de pacote de proposito: a pasta nao e um pacote instalavel, e
+# declarar [project] faria o pip tratar como tal.
+
+[tool.ruff]
+line-length = 88
+# A imagem Docker roda 3.12; o lint precisa avaliar o codigo com as regras
+# dessa versao, e nao com as da versao instalada na maquina de quem roda.
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+# Modo estrito: teste assincrono sem marcacao explicita vira erro. Sem isso ele
+# e coletado e ignorado em silencio, e a suite fica verde sem ter rodado nada.
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
