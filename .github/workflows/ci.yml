@@ -64,27 +64,6 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
 
-      # TEMPORARIO — remover depois de confirmar uma execucao verde.
-      # Existe porque, enquanto nenhum teste usa o banco, o job ficaria verde
-      # mesmo com o servico inacessivel. Este passo e a unica prova de conexao.
-      - name: TEMPORARIO conferir conexao com o banco
-        run: |
-          python - <<'PY'
-          import asyncio
-          import asyncpg
-
-          async def main() -> None:
-              # URL sem o "+asyncpg": aquele sufixo e do SQLAlchemy, o driver
-              # sozinho nao entende.
-              conexao = await asyncpg.connect(
-                  "postgresql://verificador:verificador@localhost:5432/verificador"
-              )
-              print("conectado:", await conexao.fetchval("select version()"))
-              await conexao.close()
-
-          asyncio.run(main())
-          PY
-
       - name: Lint
         run: ruff check .
 
