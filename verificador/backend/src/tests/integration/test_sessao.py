@@ -5,8 +5,6 @@ esgota o conjunto de conexões em produção. Por isso o teste mede o número de
 conexões em uso, e não apenas se a resposta veio.
 """
 
-import os
-
 import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
@@ -15,36 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config.settings import Settings
 from src.core.database.session import criar_fabrica_de_sessoes, criar_motor, get_sessao
+from src.tests.conftest import URL_DO_BANCO, exige_banco
 
-URL_PADRAO = "postgresql+asyncpg://verificador:verificador@localhost:5432/verificador"
-URL_DO_BANCO = os.environ.get("DATABASE_URL", URL_PADRAO)
-
-
-def banco_alcancavel() -> bool:
-    import asyncio
-
-    import asyncpg
-
-    async def tentar() -> bool:
-        try:
-            conexao = await asyncpg.connect(
-                URL_DO_BANCO.replace("+asyncpg", ""), timeout=2
-            )
-        except Exception:
-            return False
-        await conexao.close()
-        return True
-
-    return asyncio.run(tentar())
-
-
-# Sem banco de pé, estes testes são pulados na máquina de quem desenvolve — mas
-# **nunca** na verificação automática, onde banco ausente é defeito e pular
-# deixaria o check verde sem ter rodado nada.
-pytestmark = pytest.mark.skipif(
-    not os.environ.get("CI") and not banco_alcancavel(),
-    reason="Postgres indisponível. Suba com: docker compose up -d db",
-)
+pytestmark = exige_banco
 
 
 @pytest.fixture
