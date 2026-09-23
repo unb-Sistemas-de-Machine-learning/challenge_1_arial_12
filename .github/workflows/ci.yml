@@ -26,6 +26,27 @@ jobs:
         # Os dois projetos vivem em subpastas; nenhum comando funciona a partir
         # da raiz do repositorio.
         working-directory: verificador/backend
+    # Postgres descartavel, so enquanto o job roda. O job so comeca depois que a
+    # verificacao de saude passa. Nao entra no job da extensao, que nao usa banco.
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: verificador
+          POSTGRES_PASSWORD: verificador
+          POSTGRES_DB: verificador
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U verificador -d verificador"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Aqui o banco e alcancado pelo endereco local, e nao pelo nome do
+      # servico como dentro do Compose: o job roda na maquina, nao numa rede
+      # de conteineres junto com ele.
+      DATABASE_URL: postgresql+asyncpg://verificador:verificador@localhost:5432/verificador
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +63,27 @@ jobs:
 
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
+
+      # TEMPORARIO — remover depois de confirmar uma execucao verde.
+      # Existe porque, enquanto nenhum teste usa o banco, o job ficaria verde
+      # mesmo com o servico inacessivel. Este passo e a unica prova de conexao.
+      - name: TEMPORARIO conferir conexao com o banco
+        run: |
+          python - <<'PY'
+          import asyncio
+          import asyncpg
+
+          async def main() -> None:
+              # URL sem o "+asyncpg": aquele sufixo e do SQLAlchemy, o driver
+              # sozinho nao entende.
+              conexao = await asyncpg.connect(
+                  "postgresql://verificador:verificador@localhost:5432/verificador"
+              )
+              print("conectado:", await conexao.fetchval("select version()"))
+              await conexao.close()
+
+          asyncio.run(main())
+          PY
 
       - name: Lint
         run: ruff check .
