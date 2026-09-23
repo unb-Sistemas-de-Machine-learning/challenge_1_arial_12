@@ -75,7 +75,15 @@ async def sessao(motor: AsyncEngine) -> AsyncIterator[AsyncSession]:
         await conexao.commit()
 
         transacao = await conexao.begin()
-        fabrica = async_sessionmaker(bind=conexao, expire_on_commit=False)
+        fabrica = async_sessionmaker(
+            bind=conexao,
+            expire_on_commit=False,
+            # O repositório confirma a transação, como manda o desenho. Sem
+            # ponto de salvamento, essa confirmação mexeria na transação
+            # externa e o isolamento se perderia — e uma gravação que falha
+            # derrubaria a transação do teste junto.
+            join_transaction_mode="create_savepoint",
+        )
         async with fabrica() as aberta:
             yield aberta
         await transacao.rollback()

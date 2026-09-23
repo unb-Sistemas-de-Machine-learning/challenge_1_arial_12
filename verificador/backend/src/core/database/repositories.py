@@ -1,12 +1,14 @@
-"""Operações de domínio sobre o banco.
-
-Por enquanto só a chave de busca; as operações de leitura e escrita entram na
-subtask seguinte.
-"""
+"""Operações de domínio sobre o banco, no vocabulário do Verificador."""
 
 import hashlib
 import re
 import unicodedata
+from dataclasses import dataclass
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.core.database.models import Feedback, Veredito
 
 _ESPACOS = re.compile(r"\s+")
 
@@ -35,3 +37,60 @@ def gerar_hash_do_trecho(trecho: str) -> str:
     da esteira de agentes, e é daí que vem a economia.
     """
     return hashlib.sha256(normalizar_trecho(trecho).encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True)
+class VereditoRegistrado:
+    """O que a camada de fora recebe: nunca um objeto do mapeador.
+
+    Objeto de ORM carrega a sessão junto; ler um campo dele depois que ela
+    fechou estoura apontando para a linha que leu, e não para a que fechou.
+    """
+
+    id: int
+    resposta: dict
+
+
+async def registrar_veredito(
+    sessao: AsyncSession,
+    trecho: str,
+    estado_veredito: str,
+    resposta: dict,
+) -> VereditoRegistrado:
+    """Grava uma verificação. Cada chamada cria uma linha, mesmo com trecho repetido."""
+    linha = Veredito(
+        hash_trecho=gerar_hash_do_trecho(trecho),
+        trecho_avaliado=trecho,
+        estado_veredito=estado_veredito,
+        resposta=resposta,
+    )
+    sessao.add(linha)
+    await sessao.commit()
+    return VereditoRegistrado(id=linha.id, resposta=linha.resposta)
+
+
+async def buscar_por_hash(
+    sessao: AsyncSession, hash_trecho: str
+) -> VereditoRegistrado | None:
+    """A verificação mais recente com essa chave, ou nada.
+
+    "Mais recente" importa porque a chave não é única: refazer uma verificação
+    vencida cria linha nova, e o cache precisa da última, não da primeira.
+    """
+    linha = await sessao.scalar(
+        select(Veredito)
+        .where(Veredito.hash_trecho == hash_trecho)
+        .order_by(Veredito.criado_em.desc(), Veredito.id.desc())
+        .limit(1)
+    )
+    if linha is None:
+        return None
+    return VereditoRegistrado(id=linha.id, resposta=linha.resposta)
+
+
+async def registrar_feedback(sessao: AsyncSession, veredito_id: int, util: bool) -> int:
+    """Grava uma avaliação. Várias podem existir sobre o mesmo veredito."""
+    linha = Feedback(veredito_id=veredito_id, util=util)
+    sessao.add(linha)
+    await sessao.commit()
+    return linha.id
