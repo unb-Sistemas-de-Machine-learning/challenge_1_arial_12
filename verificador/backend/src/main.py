@@ -4,10 +4,14 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.gateway import router
-from src.core.config.settings import get_settings
+from src.api.gateway.middlewares import (
+    HEADER_CORRELACAO,
+    CorsComErroPadronizado,
+    registrar_tratamento_erros,
+)
+from src.core.config import settings as settings_module
 from src.core.database.session import criar_fabrica_de_sessoes, criar_motor
 
 
@@ -20,7 +24,7 @@ async def ciclo_de_vida(api: FastAPI) -> AsyncIterator[None]:
     `test_app_compose.py` falhar por não resolver um host fictício, num teste
     que nada tem a ver com banco.
     """
-    motor = criar_motor(get_settings())
+    motor = criar_motor(settings_module.get_settings())
     api.state.motor = motor
     api.state.fabrica_de_sessoes = criar_fabrica_de_sessoes(motor)
     try:
@@ -30,18 +34,20 @@ async def ciclo_de_vida(api: FastAPI) -> AsyncIterator[None]:
 
 
 def criar_app() -> FastAPI:
-    settings = get_settings()
+    settings = settings_module.get_settings()
     api = FastAPI(
         title="Verificador Científico",
         version="0.1.0",
         debug=settings.app_debug,
         lifespan=ciclo_de_vida,
     )
+    registrar_tratamento_erros(api)
     api.add_middleware(
-        CORSMiddleware,
+        CorsComErroPadronizado,
         allow_origins=settings.cors_origins,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=[HEADER_CORRELACAO],
     )
     api.include_router(router)
     return api
