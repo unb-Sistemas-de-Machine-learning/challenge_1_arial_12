@@ -1,4 +1,4 @@
-# Verificador Científico — execução local e Fase 01
+# Verificador Científico — contrato de verificação (spec 010)
 
 Prova o circuito completo **sem IA e sem OpenAlex**:
 seleção de texto → botão → background → back-end → veredito mock → painel.
@@ -17,8 +17,7 @@ da página visitada — muitos sites bloqueiam requisições a `localhost`.
 ```
 verificador/
 ├── backend/
-│   ├── main.py            # POST /verificar → mock fixo; GET /health
-│   ├── src/main.py        # nova API: fábrica FastAPI e gateway GET /health
+│   ├── src/main.py        # aplicação FastAPI: POST /verificar; GET /health
 │   ├── docker-compose.yml # api + db; inicia src.main:app
 │   ├── requirements.txt
 │   └── .venv/             # criado localmente
@@ -46,7 +45,7 @@ O Safari também é possível, mas exige o Xcode completo — ver
 
 ## Como rodar
 
-### 1A. Nova API por Docker Compose
+### 1A. API por Docker Compose
 
 ```bash
 cd verificador/backend
@@ -54,27 +53,27 @@ cp .env.example .env                      # só na primeira vez; ajuste os valor
 docker compose up --build
 ```
 
-O Compose sobe `api` e `db`. Em outro terminal, verifique a nova aplicação:
+O Compose sobe `api` e `db`. Em outro terminal, verifique a aplicação:
 
 ```bash
 curl http://localhost:8000/health
 ```
 
-A resposta esperada é `{"ok":true}`. O serviço `api` executa `src.main:app` e,
-por enquanto, **não** possui `/verificar`; essa rota será migrada na B05. Sem
-`.env` e sem `DATABASE_URL` no ambiente, o Compose ainda inicia o `db`, mas a
-API encerra na inicialização com erro que identifica `DATABASE_URL`.
+A resposta esperada é `{"ok":true}`. O serviço `api` executa `src.main:app`,
+que também expõe `POST /verificar`. Sem `.env` e sem `DATABASE_URL` no ambiente,
+o Compose ainda inicia o `db`, mas a API encerra na inicialização com erro que
+identifica `DATABASE_URL`.
 
-### 1B. Stub legado por venv (para testar a extensão até B05)
+### 1B. API por venv (alternativa ao Compose)
 
-Pare o Compose antes de iniciar o stub, pois ambos usam a porta 8000.
+Pare o Compose antes de iniciar o Uvicorn local, pois ambos usam a porta 8000.
 
 ```bash
 cd verificador/backend
 cp .env.example .env                      # só na primeira vez; ajuste os valores para seu ambiente
 python3 -m venv .venv                    # só na primeira vez
 ./.venv/bin/pip install -r requirements.txt
-./.venv/bin/uvicorn main:app --reload --port 8000
+./.venv/bin/uvicorn src.main:app --reload --port 8000
 ```
 
 Confira isolado, antes de mexer na extensão:
@@ -87,15 +86,16 @@ curl -X POST http://localhost:8000/verificar \
 
 Deve voltar o JSON mock. **Só avance quando isso funcionar.**
 
+O healthcheck responde em `http://localhost:8000/health` com `{"ok":true}`.
 O backend lê `.env` na inicialização. `DATABASE_URL` precisa estar preenchida,
-mas o stub não conecta ao banco; `OPENAI_API_KEY` e `OPENALEX_MAILTO` podem ficar
+mas o healthcheck não conecta ao banco; `OPENAI_API_KEY` e `OPENALEX_MAILTO` podem ficar
 vazios nesta fase. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
 mantém `['*']`.
 
 ### 2. Extensão (terminal 2)
 
-Até a migração de `/verificar` na B05, execute o **stub legado do passo 1B**
-antes de testar a extensão. O Compose do passo 1A serve apenas o healthcheck.
+Inicie a API pelo Compose (passo 1A) ou pelo venv (passo 1B) antes de testar a
+extensão. Ambos expõem `/verificar` e `/health`.
 
 ```bash
 cd verificador/extensao
@@ -263,6 +263,6 @@ Depois volte ao Xcode e dê ⌘R. Não precisa reconverter.
 
 ## Próxima migração
 
-A B05 levará `/verificar` para o gateway em `backend/src/api/gateway/`.
-Até lá, `backend/main.py` continua disponível para testar a extensão sem
-recompilá-la.
+As próximas etapas substituem o veredicto fixo em `backend/src/api/gateway/routes.py`
+por aquisição e análise de evidências reais.
+A extensão **não muda** — é a prova de que o contrato JSON está bem definido.

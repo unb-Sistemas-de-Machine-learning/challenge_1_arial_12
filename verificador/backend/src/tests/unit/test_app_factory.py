@@ -20,7 +20,7 @@ def load_app_module():
     return module
 
 
-def test_criar_app_monta_gateway_sem_rotas_de_negocio(monkeypatch) -> None:
+def test_criar_app_monta_gateway_com_rotas_da_feat_10(monkeypatch) -> None:
     custom = Settings(
         _env_file=None, database_url="postgresql+asyncpg://db/teste", app_debug=True
     )
@@ -34,7 +34,7 @@ def test_criar_app_monta_gateway_sem_rotas_de_negocio(monkeypatch) -> None:
     assert module.app.debug is True
     assert "/health" in {route.path for route in module.app.routes}
     assert "/saude" not in {route.path for route in module.app.routes}
-    assert "/verificar" not in {route.path for route in module.app.routes}
+    assert "/verificar" in {route.path for route in module.app.routes}
 
     another = module.criar_app()
     assert isinstance(another, FastAPI)

@@ -1,4 +1,4 @@
-"""Comportamento HTTP da nova API e preservação do stub legado."""
+"""Comportamento HTTP da API e falha antecipada de configuração."""
 
 import importlib.util
 from pathlib import Path
@@ -39,7 +39,12 @@ def test_nova_api_responde_health_e_aplica_cors(monkeypatch) -> None:
                 "Access-Control-Request-Method": "GET",
             },
         )
-        assert client.get("/verificar").status_code == 404
+        assert (
+            client.post(
+                "/verificar", json={"trecho": "Uma alegação de teste"}
+            ).status_code
+            == 200
+        )
         assert client.get("/saude").status_code == 404
 
     assert health.status_code == 200
@@ -58,16 +63,3 @@ def test_erro_de_inicializacao_nomeia_database_url(monkeypatch) -> None:
     with pytest.raises(ValidationError) as error:
         load_app("src/main.py")
     assert "DATABASE_URL" in str(error.value)
-
-
-def test_stub_legado_continua_respondendo_verificar(monkeypatch) -> None:
-    custom = Settings(_env_file=None, database_url="postgresql+asyncpg://db/teste")
-    monkeypatch.setattr(settings_module, "get_settings", lambda: custom)
-    with TestClient(load_app("main.py")) as client:
-        assert client.get("/health").json() == {"ok": True}
-        assert client.get("/saude").status_code == 404
-        response = client.post("/verificar", json={"trecho": "Uma alegação de teste"})
-
-    assert response.status_code == 200
-    assert response.json()["estado"] == "exagera"
-    assert response.json()["estudo"]["titulo"] == "(mock) Estudo de exemplo"

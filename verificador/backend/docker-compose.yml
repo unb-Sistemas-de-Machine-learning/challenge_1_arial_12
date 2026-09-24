@@ -7,7 +7,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./main.py:/app/main.py:ro
       - ./src:/app/src:ro
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000
     # Condicao, e nao apenas "depends_on: db": sem ela o Compose so garante a

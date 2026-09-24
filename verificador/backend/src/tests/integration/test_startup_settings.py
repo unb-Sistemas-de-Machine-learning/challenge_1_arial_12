@@ -10,10 +10,10 @@ from pydantic import ValidationError
 from src.core.config import settings as settings_module
 from src.core.config.settings import Settings
 
-MAIN_FILE = Path(__file__).resolve().parents[3] / "main.py"
+MAIN_FILE = Path(__file__).resolve().parents[2] / "main.py"
 
 
-def load_stub_app():
+def load_app():
     spec = importlib.util.spec_from_file_location("stub_settings_test", MAIN_FILE)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -31,7 +31,7 @@ def test_app_falha_na_inicializacao_sem_database_url(
         settings_module, "get_settings", lambda: Settings(_env_file=None, **values)
     )
     with pytest.raises(ValidationError):
-        load_stub_app()
+        load_app()
 
 
 def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(
@@ -49,7 +49,7 @@ def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(
         cors_origins=["https://permitida.example"],
     )
     monkeypatch.setattr(settings_module, "get_settings", lambda: custom)
-    app = load_stub_app()
+    app = load_app()
     assert app.debug is True
 
     with TestClient(app) as client:

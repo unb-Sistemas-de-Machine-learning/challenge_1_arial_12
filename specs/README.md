@@ -20,6 +20,7 @@ escrito nela será inventado.
 | 007 | [Inicialização da API pelo Docker Compose](007-app-fastapi-compose/spec.md) | implementada | `feature/007-app-fastapi-compose` |
 | 008 | [Verificação automática de lint e testes em cada PR](008-ci-lint-e-testes/spec.md) | implementada | `feature/008-ci-ruff-pytest` |
 | 009 | [Camada de persistência do Verificador](009-persistencia-postgres/spec.md) | em revisão | `feature/009-persistencia-postgres` |
+| 010 | [Contrato de verificação + healthcheck](010-contrato-verificacao-healthcheck/spec.md) | em revisão | `feature/010-rota-verificar-health` |
 
 **Status possíveis:** `rascunho` → `em revisão` → `aprovada` → `implementada`.
 Uma spec que morreu no caminho vira `abandonada`, mas **continua na tabela** e
@@ -212,7 +213,7 @@ só dá esse sinal depois que o produto já está na mão do usuário.
 
 ## Sugestão de ordem das primeiras specs
 
-| Ordem sugerida | Feature | Por que nessa ordem |
+| Ordem | Feature | Por que nessa ordem |
 | :-- | :--- | :--- |
 | 1 | Contrato de verificação + healthcheck | destrava o time da extensão com um veredicto fixo |
 | 2 | Busca na OpenAlex | integração real, ainda sem LLM |

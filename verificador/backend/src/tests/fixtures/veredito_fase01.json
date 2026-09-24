@@ -1,0 +1,11 @@
+{
+  "estado": "exagera",
+  "estudo": {
+    "titulo": "(mock) Estudo de exemplo",
+    "ano": 2019,
+    "doi": "10.0000/mock",
+    "retratado": false
+  },
+  "termos": ["polylaminin", "spinal cord injury", "regeneration"],
+  "justificativa": "(mock) Resposta de teste — a IA entra na Fase 04."
+}
