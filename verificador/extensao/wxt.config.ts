@@ -1,4 +1,15 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { defineConfig } from "wxt";
+
+// Caminho da pagina de teste resolvido a partir DESTE arquivo, nao da maquina
+// de quem clonou: extensao/wxt.config.ts -> ../pagina-teste.html.
+// pathToFileURL cuida das diferencas de Windows (C:\ -> file:///C:/) e de
+// acentos/espacos no caminho do clone.
+const diretorioDaExtensao = dirname(fileURLToPath(import.meta.url));
+const urlDaPaginaDeTeste = pathToFileURL(
+  resolve(diretorioDaExtensao, "..", "pagina-teste.html"),
+).href;
 
 export default defineConfig({
   // manifest como funcao: cada navegador recebe so as chaves que entende.
@@ -31,7 +42,7 @@ export default defineConfig({
   // Abre direto a pagina de teste local ao rodar `npm run dev`.
   webExt: {
     startUrls: [
-      "file:///Users/cadum/Documents/UnB/SML/challenge_1_arial_12/verificador/pagina-teste.html",
+      urlDaPaginaDeTeste,
       "https://pt.wikipedia.org/wiki/Medula_espinhal",
     ],
   },

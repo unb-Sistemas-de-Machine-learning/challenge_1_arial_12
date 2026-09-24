@@ -132,7 +132,9 @@ carregada e com **hot-reload**: salvou um arquivo, a extensão recarrega sozinha
 
 Ele já abre em duas abas — a `pagina-teste.html` local e o verbete
 *Medula espinhal* da Wikipédia —, que são exatamente os dois alvos do roteiro
-abaixo. Isso vem de `webExt.startUrls` no `wxt.config.ts`.
+abaixo. Isso vem de `webExt.startUrls` no `wxt.config.ts`. O caminho da
+`pagina-teste.html` é derivado da localização do próprio `wxt.config.ts`, então
+funciona em qualquer clone, nos três sistemas — não edite o arquivo à mão.
 
 ## Roteiro de teste manual
 
