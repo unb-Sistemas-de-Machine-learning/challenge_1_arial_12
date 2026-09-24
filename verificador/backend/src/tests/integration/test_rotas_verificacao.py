@@ -45,7 +45,10 @@ def test_entrada_estruturalmente_invalida_retorna_422(create_app) -> None:
     with TestClient(create_app()) as client:
         response = client.post("/verificar", json={"url": "file:///pagina-teste.html"})
     assert response.status_code == 422
-    assert response.json()["detail"][0]["loc"][-1] == "trecho"
+    assert response.json() == {
+        "codigo": "entrada_invalida",
+        "mensagem": "Não foi possível validar a solicitação.",
+    }
 
 
 def test_health_nao_depende_de_database_url(create_app) -> None:

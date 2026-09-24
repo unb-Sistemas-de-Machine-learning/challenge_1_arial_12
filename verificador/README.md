@@ -92,6 +92,29 @@ mas o healthcheck não conecta ao banco; `OPENAI_API_KEY` e `OPENALEX_MAILTO` po
 vazios nesta fase. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
 mantém `['*']`.
 
+### Erros do gateway
+
+Erros HTTP retornam `{"codigo":"...","mensagem":"..."}`. O cabeçalho
+`X-Correlation-ID` identifica a requisição no log do servidor; informe esse ID
+ao investigar uma falha. A extensão escolhe o texto exibido pelo `codigo`, sem
+mostrar detalhes técnicos da resposta.
+
+| Status | Código | Mensagem sugerida na extensão |
+| :--- | :--- | :--- |
+| 422 | `entrada_invalida` | Revise o texto selecionado e tente novamente. |
+| 429 | `limite_excedido` | Muitas solicitações. Aguarde um pouco e tente novamente. |
+| 503 | `openalex_indisponivel` | A busca de estudos está indisponível. Tente novamente mais tarde. |
+| 504 | `llm_timeout` | A análise demorou demais. Tente novamente. |
+| 404 | `recurso_nao_encontrado` | Serviço não encontrado. |
+| 405 | `metodo_nao_permitido` | Esta operação não está disponível. |
+| 400 e demais `4xx` | `erro_requisicao` | Não foi possível processar a solicitação. |
+| 503 genérico | `servico_indisponivel` | Serviço indisponível. Tente novamente mais tarde. |
+| 500 e demais `5xx` | `erro_interno` | Não foi possível concluir a verificação agora. |
+
+Se não houver resposta HTTP, a extensão mostra uma mensagem local de falha de
+conexão. A integração real com OpenAlex e LLM ainda não está ativa; seus códigos
+de erro ficam definidos para as próximas etapas.
+
 ### 2. Extensão (terminal 2)
 
 Inicie a API pelo Compose (passo 1A) ou pelo venv (passo 1B) antes de testar a

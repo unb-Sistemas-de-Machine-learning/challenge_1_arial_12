@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Body
 
+from src.api.schemas.erro import Erro
 from src.api.schemas.verificacao import Estado, Estudo, Pedido, Veredito
 
 router = APIRouter()
@@ -36,7 +37,12 @@ def health() -> dict[str, bool]:
                     "example": _VEREDITO_FIXO.model_dump(mode="json"),
                 }
             },
-        }
+        },
+        422: {"model": Erro, "description": "Entrada inválida"},
+        429: {"model": Erro, "description": "Limite de solicitações excedido"},
+        503: {"model": Erro, "description": "Busca de estudos indisponível"},
+        504: {"model": Erro, "description": "Tempo de análise excedido"},
+        500: {"model": Erro, "description": "Erro interno"},
     },
 )
 def verificar(

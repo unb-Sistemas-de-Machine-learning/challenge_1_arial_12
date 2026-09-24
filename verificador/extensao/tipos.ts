@@ -16,6 +16,23 @@ export interface Veredito {
   justificativa: string;
 }
 
+/** Códigos públicos de erro do gateway. */
+export type CodigoErroApi =
+  | "entrada_invalida"
+  | "limite_excedido"
+  | "openalex_indisponivel"
+  | "llm_timeout"
+  | "recurso_nao_encontrado"
+  | "metodo_nao_permitido"
+  | "erro_requisicao"
+  | "servico_indisponivel"
+  | "erro_interno";
+
+export interface ErroApi {
+  codigo: CodigoErroApi;
+  mensagem: string;
+}
+
 /** Mensagem content script -> background. */
 export interface PedidoVerificar {
   tipo: "verificar";
