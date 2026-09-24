@@ -21,6 +21,7 @@ escrito nela será inventado.
 | 008 | [Verificação automática de lint e testes em cada PR](008-ci-lint-e-testes/spec.md) | implementada | `feature/008-ci-ruff-pytest` |
 | 009 | [Camada de persistência do Verificador](009-persistencia-postgres/spec.md) | em revisão | `feature/009-persistencia-postgres` |
 | 010 | [Contrato de verificação + healthcheck](010-contrato-verificacao-healthcheck/spec.md) | em revisão | `feature/010-rota-verificar-health` |
+| 011 | [Tratamento de erro padronizado no Gateway](011-erro-padronizado-gateway/spec.md) | implementada | `feature/011-erro-padronizado-gateway` |
 
 **Status possíveis:** `rascunho` → `em revisão` → `aprovada` → `implementada`.
 Uma spec que morreu no caminho vira `abandonada`, mas **continua na tabela** e
