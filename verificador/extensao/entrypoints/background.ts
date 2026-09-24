@@ -1,8 +1,9 @@
 import { defineBackground } from "wxt/utils/define-background";
 import { browser } from "wxt/browser";
 import type { CodigoErroApi, PedidoVerificar, RespostaVerificar } from "../tipos";
+import { ROTAS, urlDaRota } from "../config";
 
-const ENDPOINT = "http://localhost:8000/verificar";
+const ENDPOINT = urlDaRota(ROTAS.verificar);
 
 const MENSAGENS_ERRO: Record<CodigoErroApi, string> = {
   entrada_invalida: "Revise o texto selecionado e tente novamente.",
@@ -28,7 +29,7 @@ function mensagemDeErro(codigo: unknown): string {
 }
 
 export default defineBackground(() => {
-  console.log("[verificador] background pronto");
+  console.log("[verificador] background pronto —", ENDPOINT);
 
   browser.runtime.onMessage.addListener(
     (
