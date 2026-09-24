@@ -1,6 +1,8 @@
-"""Handlers de erro e correlação de requisições do gateway."""
+"""Handlers de erro, correlação e limite de requisições do gateway."""
 
 import logging
+import math
+import time
 import traceback
 from collections.abc import Awaitable, Callable
 from uuid import UUID, uuid4
@@ -199,3 +201,73 @@ def registrar_tratamento_erros(api: FastAPI) -> None:
 
         resposta.headers[HEADER_CORRELACAO] = request.state.id_correlacao
         return resposta
+
+
+class ContadorDeJanelaFixa:
+    """Conta requisições por chave em janelas fixas, sem estado persistido.
+
+    Não é compartilhado entre processos: correto para o único worker do
+    Compose atual, documentado como limite conhecido caso isso mude.
+    """
+
+    def __init__(
+        self,
+        limite: int,
+        janela_segundos: int,
+        relogio: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._limite = limite
+        self._janela = janela_segundos
+        self._relogio = relogio
+        self._contagens: dict[str, tuple[int, float]] = {}
+
+    def registrar(self, chave: str) -> tuple[bool, int]:
+        """``(True, 0)`` quando permitida; ``(False, segundos_para_liberar)``."""
+        agora = self._relogio()
+        contagem, expira_em = self._contagens.get(chave, (0, 0.0))
+        if agora >= expira_em:
+            contagem, expira_em = 0, agora + self._janela
+        contagem += 1
+        self._contagens[chave] = (contagem, expira_em)
+        if contagem > self._limite:
+            return False, max(1, math.ceil(expira_em - agora))
+        return True, 0
+
+
+def registrar_limite_de_taxa(
+    api: FastAPI,
+    settings: settings_module.Settings,
+    relogio: Callable[[], float] = time.monotonic,
+) -> None:
+    """Nega com 429 a origem que exceder o limite; `GET /health` é isento.
+
+    `relogio` só existe para o teste de integração avançar o tempo sem
+    depender de `time.sleep`; a aplicação real usa o padrão.
+    """
+
+    contador = ContadorDeJanelaFixa(
+        limite=settings.rate_limit_max_requests,
+        janela_segundos=settings.rate_limit_window_seconds,
+        relogio=relogio,
+    )
+
+    @api.middleware("http")
+    async def limitar_por_origem(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        if request.url.path == "/health":
+            return await call_next(request)
+
+        chave = request.headers.get("origin") or (
+            request.client.host if request.client else "desconhecida"
+        )
+        permitida, retry_after = contador.registrar(chave)
+        if not permitida:
+            request.state.erro_padronizado = True
+            return _resposta_erro(
+                CodigoErro.LIMITE_EXCEDIDO,
+                429,
+                request.state.id_correlacao,
+                headers={"Retry-After": str(retry_after)},
+            )
+        return await call_next(request)

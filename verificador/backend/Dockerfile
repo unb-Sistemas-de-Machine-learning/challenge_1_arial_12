@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin app
 
 COPY --chown=app:app src ./src
+COPY --chown=app:app alembic.ini .
+COPY --chown=app:app migrations ./migrations
 
 EXPOSE 8000
 

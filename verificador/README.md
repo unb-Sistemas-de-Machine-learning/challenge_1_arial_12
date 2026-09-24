@@ -90,7 +90,14 @@ O healthcheck responde em `http://localhost:8000/health` com `{"ok":true}`.
 O backend lê `.env` na inicialização. `DATABASE_URL` precisa estar preenchida,
 mas o healthcheck não conecta ao banco; `OPENAI_API_KEY` e `OPENALEX_MAILTO` podem ficar
 vazios nesta fase. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
-mantém `['*']`.
+mantém `['*']` — use isso só em desenvolvimento (`APP_DEBUG=true`); fora dele,
+configure a lista com a origem real da extensão publicada.
+
+Toda rota, exceto `/health`, tem um limite de requisições por origem
+(cabeçalho `Origin`, ou o IP da conexão quando ele falta). Passar do limite
+responde `429` com `Retry-After` em segundos até a janela reiniciar.
+`RATE_LIMIT_MAX_REQUESTS` (padrão `30`) e `RATE_LIMIT_WINDOW_SECONDS` (padrão
+`60`) controlam o limite e a janela; a contagem é em memória, por processo.
 
 ### Erros do gateway
 

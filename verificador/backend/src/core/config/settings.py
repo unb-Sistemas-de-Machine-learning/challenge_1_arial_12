@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     database_url: SecretStr = Field(validation_alias="DATABASE_URL")
     openalex_mailto: str | None = None
     cors_origins: list[str] = Field(default_factory=lambda: ["*"])
+    rate_limit_max_requests: int = 30
+    rate_limit_window_seconds: int = 60
 
     @field_validator("database_url", mode="before")
     @classmethod
