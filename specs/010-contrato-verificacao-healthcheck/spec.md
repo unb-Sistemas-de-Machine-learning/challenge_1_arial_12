@@ -128,3 +128,4 @@ Esta feature não utiliza LLM nem possui comportamento probabilístico. Todas as
 | 2026-09-18 | Implementação automatizada concluída; mantém revisão da spec, integração com #7 e teste manual pendentes |
 | 2026-09-18 | Renumera a entrega para feat 10 (spec 010) |
 | 2026-09-19 | Integra a fábrica e o Compose da task #7; preserva `/verificar` no gateway e remove o stub legado |
+| 2026-09-23 | Confirma o critério 9 com URL bem formada para host inacessível; 62 testes passaram com PostgreSQL isolado e a extensão passou na checagem de tipos. Roteiro manual pendente. |

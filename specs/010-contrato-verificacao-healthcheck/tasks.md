@@ -8,7 +8,7 @@
 - [x] 4. Criar testes que detectem divergências de campos com `extensao/tipos.ts`.
 - [x] 5. Criar teste que detecte divergência dos valores de `Estado` com `extensao/tipos.ts`.
 - [x] 6. Criar testes HTTP para `/verificar`, `/health`, `/docs` e `/openapi.json`.
-- [x] 7. Criar teste de `/health` com `DATABASE_URL` inválida e sem banco disponível.
+- [x] 7. Criar teste de `/health` com `DATABASE_URL` bem formada apontando para host inacessível, sem banco disponível.
 - [x] 8. Implementar os modelos Pydantic conforme o contrato da spec.
 - [x] 9. Implementar `/verificar` com `response_model`, exemplo OpenAPI e payload fixo da fixture.
 - [x] 10. Implementar `/health` sem dependência de banco.
@@ -21,7 +21,14 @@
 
 ## Antes de abrir o PR de implementação
 
-- [ ] Todos os critérios de aceite da spec têm teste correspondente ou verificação manual explícita
+- [x] Todos os critérios de aceite da spec têm teste correspondente ou verificação manual explícita
 - [x] `spec.md` atualizado com o que mudou durante a implementação
 - [ ] Status da spec alterado para `implementada`
 - [x] Linha da spec atualizada no índice (`specs/README.md`)
+
+## Validação em 2026-09-23
+
+- [x] Suíte do backend com PostgreSQL temporário e isolado: 62 testes passaram, sem skips.
+- [x] Extensão: `npm run compile` passou após `npm ci`.
+- [ ] CI do PR: ainda não há PR da branch `feature/010-rota-verificar-health`.
+- [ ] Roteiro manual com uma extensão previamente instalada, sem recompilação (critérios 21–23).
