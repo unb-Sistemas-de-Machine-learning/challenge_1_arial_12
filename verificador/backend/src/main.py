@@ -1,6 +1,7 @@
 """Fábrica e ponto de entrada ASGI da API."""
 
-from collections.abc import AsyncIterator
+import time
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,6 +10,7 @@ from src.api.gateway import router
 from src.api.gateway.middlewares import (
     HEADER_CORRELACAO,
     CorsComErroPadronizado,
+    registrar_limite_de_taxa,
     registrar_tratamento_erros,
 )
 from src.core.config import settings as settings_module
@@ -33,7 +35,10 @@ async def ciclo_de_vida(api: FastAPI) -> AsyncIterator[None]:
         await motor.dispose()
 
 
-def criar_app() -> FastAPI:
+def criar_app(*, relogio_limite: Callable[[], float] = time.monotonic) -> FastAPI:
+    """`relogio_limite` só existe para o teste de integração do limite de taxa
+    avançar o tempo sem depender de `time.sleep`; a aplicação real usa o
+    padrão."""
     settings = settings_module.get_settings()
     api = FastAPI(
         title="Verificador Científico",
@@ -41,6 +46,13 @@ def criar_app() -> FastAPI:
         debug=settings.app_debug,
         lifespan=ciclo_de_vida,
     )
+    # Starlette empilha o middleware na ordem inversa de registro: o último
+    # registrado é o mais externo, e vê a requisição primeiro. O limite
+    # precisa ficar por dentro da correlação (para reaproveitar
+    # `request.state.id_correlacao`) e por dentro do CORS (para que uma
+    # resposta 429 ainda receba `Access-Control-Allow-Origin`) — por isso é
+    # registrado antes dos outros dois, e não depois.
+    registrar_limite_de_taxa(api, settings, relogio=relogio_limite)
     registrar_tratamento_erros(api)
     api.add_middleware(
         CorsComErroPadronizado,
