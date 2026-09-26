@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "outDir": ".test-dist",
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": [
+    "tipos.ts",
+    "mensagens-erro.ts",
+    "painel.ts",
+    "controle-verificacao.ts",
+    "requisicoes.ts"
+  ]
+}

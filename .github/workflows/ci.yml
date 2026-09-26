@@ -95,3 +95,6 @@ jobs:
 
       - name: Checagem de tipos
         run: npm run compile
+
+      - name: Testes da extensão
+        run: npm test
