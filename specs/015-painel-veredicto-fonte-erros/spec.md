@@ -39,12 +39,16 @@ A extensão já envia o trecho ao gateway e mostra o veredito mock, mas o DOI n�
 
 Não se aplica. O painel e o mapeamento são determinísticos.
 
-## 6. Pendências de validação
+## 6. Validação realizada e pendências
 
-- Roteiro manual nos dois navegadores e capturas para o PR dependem de ambiente gráfico com Chrome e Firefox. Não marcar como concluídos apenas com build ou testes automatizados.
+- O fluxo principal foi aprovado manualmente no Chrome: `exagera`, link DOI abrindo em nova aba, mensagem de erro de rede e retry do mesmo trecho. Há evidências visuais do veredito e do erro.
+- Um estado de veredito foi usado como evidência visual do painel. `sustenta`, `nada_encontrado`, estudo ausente e retratação foram simulados pelos testes automatizados; isso não equivale a capturas desses estados no navegador.
+- O Firefox não foi testado manualmente após a aprovação no Chrome, pois não está disponível neste ambiente. O build Firefox passou, mas build não comprova comportamento visual.
+- O critério 10 da issue ainda pede roteiro nos dois navegadores e capturas dos três estados. Essa diferença deve ficar explícita no PR e depende de aceitação dos revisores; não está marcada como cumprida nesta spec. O cancelamento também tem teste automatizado, sem evidência visual manual registrada.
 
 ## 7. Histórico
 
 | Data | Mudança |
 | :--- | :--- |
 | 2026-09-25 | Spec da issue #15; interface documentada aqui porque `001` não existe no repositório |
+| 2026-09-25 | Registra aprovação do fluxo principal no Chrome e evidências de `exagera`/erro; mantém explícitas as validações visuais não realizadas |

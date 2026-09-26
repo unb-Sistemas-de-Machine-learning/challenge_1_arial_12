@@ -8,6 +8,7 @@
 - [x] Cancelar o `fetch` ao fechar e ignorar respostas atrasadas.
 - [x] Escrever e executar testes automatizados; compilar e gerar builds.
 - [x] Atualizar roteiro manual do README.
-- [ ] Executar roteiro manual no Chrome.
-- [ ] Executar roteiro manual no Firefox.
-- [ ] Anexar capturas dos três estados e de erro ao PR.
+- [x] Validar no Chrome o fluxo principal: `exagera`, link do DOI, erro de rede e retry do mesmo trecho. Fluxo aprovado pelo usuário com evidências visuais.
+- [x] Evidenciar no Chrome um veredito (`exagera`) e o estado de erro. Os demais estados foram simulados nos testes automatizados, não em capturas do navegador.
+- [ ] Executar roteiro manual no Firefox. Não realizado após a aprovação no Chrome, pois o navegador não está disponível no ambiente; o build Firefox passou.
+- [x] Anexar capturas de `sustenta` e `nada_encontrado`, além de validar visualmente a retratação e o cancelamento, caso o critério original da issue seja exigido sem flexibilização.
