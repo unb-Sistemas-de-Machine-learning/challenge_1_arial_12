@@ -1,4 +1,5 @@
 node_modules
 .output
 .wxt
+.test-dist
 stats.html

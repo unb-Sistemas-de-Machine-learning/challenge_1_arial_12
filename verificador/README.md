@@ -160,7 +160,7 @@ funciona em qualquer clone, nos três sistemas — não edite o arquivo à mão.
 4. Em menos de um segundo o painel troca para:
    - badge laranja **EXAGERA**
    - justificativa `(mock) Resposta de teste — a IA entra na Fase 04.`
-   - o estudo `(mock) Estudo de exemplo · 2019 · doi:10.0000/mock`
+   - o estudo `(mock) Estudo de exemplo · 2019` e o link **Abrir publicação (DOI: 10.0000/mock)**, que abre `https://doi.org/10.0000/mock` em nova aba
    - as três tags `polylaminin`, `spinal cord injury`, `regeneration`
 5. **Olhe o terminal 1 (uvicorn).** Deve ter impresso exatamente o trecho que
    você selecionou:
@@ -177,6 +177,14 @@ funciona em qualquer clone, nos três sistemas — não edite o arquivo à mão.
    Funcionando nos dois, o encanamento não depende da página.
 7. **Repita tudo no outro navegador**, se tiver o Chrome (`npm run dev`).
 8. Feche o painel no `×` e confirme que uma nova seleção reabre o fluxo.
+
+### Painel de veredicto — roteiro da task #15
+
+- Confira que o link do DOI abre em outra aba; o painel original permanece aberto.
+- Pare o backend e verifique novamente. O painel deve exibir uma mensagem de conexão em português e o botão **Tentar novamente**, sem mostrar `localhost`, porta ou stack. Reinicie o backend e clique em **Tentar novamente** sem selecionar outro trecho; o mesmo texto deve ser enviado.
+- Para testar o cancelamento, clique em **Verificar** e feche o painel enquanto ele mostra **Verificando…**. A resposta tardia não pode reabrir o painel.
+- Confira os estados **Sustenta**, **Exagera** e **Nada encontrado**, além do aviso **Estudo retratado** e do erro. O backend atual devolve apenas o veredito mock **Exagera**; os outros estados exigem respostas simuladas ou uma integração futura. Não trate o build como evidência de teste visual desses estados.
+- Repita no Chrome e no Firefox; anexe capturas dos três estados e do erro ao PR. Os testes automatizados da apresentação ficam em `extensao/tests/` e podem ser executados com `npm test`.
 
 ## Checklist da Fase 01
 

@@ -1,84 +1,39 @@
 import { defineBackground } from "wxt/utils/define-background";
 import { browser } from "wxt/browser";
-import type { CodigoErroApi, PedidoVerificar, RespostaVerificar } from "../tipos";
+import type { PedidoCancelar, PedidoVerificar, RespostaVerificar } from "../tipos";
 import { ROTAS, urlDaRota } from "../config";
+import { criarRequisicoes } from "../requisicoes";
 
 const ENDPOINT = urlDaRota(ROTAS.verificar);
 
-const MENSAGENS_ERRO: Record<CodigoErroApi, string> = {
-  entrada_invalida: "Revise o texto selecionado e tente novamente.",
-  limite_excedido: "Muitas solicitações. Aguarde um pouco e tente novamente.",
-  openalex_indisponivel:
-    "A busca de estudos está indisponível. Tente novamente mais tarde.",
-  llm_timeout: "A análise demorou demais. Tente novamente.",
-  recurso_nao_encontrado: "Serviço não encontrado.",
-  metodo_nao_permitido: "Esta operação não está disponível.",
-  erro_requisicao: "Não foi possível processar a solicitação.",
-  servico_indisponivel: "Serviço indisponível. Tente novamente mais tarde.",
-  erro_interno: "Não foi possível concluir a verificação agora.",
-};
-
-function mensagemDeErro(codigo: unknown): string {
-  if (
-    typeof codigo === "string" &&
-    Object.prototype.hasOwnProperty.call(MENSAGENS_ERRO, codigo)
-  ) {
-    return MENSAGENS_ERRO[codigo as CodigoErroApi];
-  }
-  return "Não foi possível concluir a verificação agora.";
-}
-
 export default defineBackground(() => {
   console.log("[verificador] background pronto —", ENDPOINT);
+  const requisicoes = criarRequisicoes(ENDPOINT, fetch, (status, correlacao) => {
+    console.warn("[verificador] erro HTTP:", status, "correlation_id:", correlacao);
+  });
 
   browser.runtime.onMessage.addListener(
     (
       msg: unknown,
       _sender: unknown,
-      sendResponse: (r: RespostaVerificar) => void,
+      sendResponse: (resposta: RespostaVerificar) => void,
     ) => {
+      if (typeof msg !== "object" || msg === null || !("tipo" in msg)) return;
+      if (msg.tipo === "cancelar") {
+        const pedido = msg as PedidoCancelar;
+        if (typeof pedido.id === "string") requisicoes.cancelar(pedido);
+        return;
+      }
+      if (msg.tipo !== "verificar") return;
       const pedido = msg as PedidoVerificar;
-      if (pedido?.tipo !== "verificar") return;
+      if (
+        typeof pedido.id !== "string" ||
+        typeof pedido.trecho !== "string" ||
+        typeof pedido.url !== "string"
+      ) return;
 
-      console.log("[verificador] pedido:", pedido.trecho.slice(0, 80));
-
-      fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trecho: pedido.trecho, url: pedido.url }),
-      })
-        .then(async (r) => {
-          if (!r.ok) {
-            let corpo: unknown;
-            try {
-              corpo = (await r.json()) as unknown;
-            } catch {
-              corpo = null;
-            }
-            const codigo =
-              typeof corpo === "object" && corpo !== null && "codigo" in corpo
-                ? corpo.codigo
-                : null;
-            console.warn(
-              "[verificador] erro HTTP:",
-              r.status,
-              "correlation_id:",
-              r.headers.get("X-Correlation-ID"),
-            );
-            sendResponse({ ok: false, erro: mensagemDeErro(codigo) });
-            return;
-          }
-          sendResponse({ ok: true, veredito: await r.json() });
-        })
-        .catch((e) => {
-          console.error("[verificador] falhou:", e);
-          sendResponse({
-            ok: false,
-            erro: "Não foi possível conectar ao servidor. Tente novamente.",
-          });
-        });
-
-      // Obrigatorio: mantem o canal aberto ate o sendResponse assincrono.
+      requisicoes.verificar(pedido, sendResponse);
+      // Mantém o canal aberto até a resposta assíncrona.
       return true;
     },
   );
