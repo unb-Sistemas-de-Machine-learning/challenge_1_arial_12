@@ -24,6 +24,7 @@ class Estudo(BaseModel):
 
 
 class Veredito(BaseModel):
+    id: int | None = None
     estado: Estado
     estudo: Estudo | None
     termos: list[str]
