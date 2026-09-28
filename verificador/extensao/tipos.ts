@@ -10,6 +10,7 @@ export interface Estudo {
 }
 
 export interface Veredito {
+  id: number | null;
   estado: Estado;
   estudo: Estudo | null;
   termos: string[];
@@ -44,6 +45,12 @@ export interface PedidoVerificar {
 export interface PedidoCancelar {
   tipo: "cancelar";
   id: string;
+}
+
+export interface PedidoFeedback {
+  tipo: "feedback";
+  veredicto_id: number;
+  util: boolean;
 }
 
 export type CodigoErroExtensao = CodigoErroApi | "falha_rede" | "cancelada";

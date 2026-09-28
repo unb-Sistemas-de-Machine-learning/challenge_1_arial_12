@@ -7,7 +7,7 @@ import { codigoErroApi } from "./mensagens-erro.ts";
 
 /** Mantém um AbortController por tentativa para o fechamento do painel. */
 export function criarRequisicoes(
-  endpoint: string,
+  endpoints: { verificar: string; feedback: string },
   buscar: typeof fetch = fetch,
   registrarErro: (status: number, correlacao: string | null) => void = () => {},
 ) {
@@ -23,7 +23,7 @@ export function criarRequisicoes(
   ): void {
     const controlador = new AbortController();
     ativas.set(pedido.id, controlador);
-    void buscar(endpoint, {
+    void buscar(endpoints.verificar, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ trecho: pedido.trecho, url: pedido.url }),
@@ -73,5 +73,16 @@ export function criarRequisicoes(
       });
   }
 
-  return { verificar, cancelar };
+  function enviarFeedback(veredicto_id: number, util: boolean): void {
+    const data_hora = new Date().toISOString();
+    void buscar(endpoints.feedback, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ veredicto_id, util, data_hora }),
+    }).catch((erro) => {
+      console.error("[verificador] falha silenciada ao enviar feedback:", erro);
+    });
+  }
+
+  return { verificar, cancelar, enviarFeedback };
 }

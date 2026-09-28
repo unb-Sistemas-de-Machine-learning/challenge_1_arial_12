@@ -15,6 +15,7 @@ export const BASE_PADRAO = "http://localhost:8000";
 /** Caminhos servidos pelo back-end (backend/src/api/gateway/routes.py). */
 export const ROTAS = {
   verificar: "/verificar",
+  feedback: "/feedback",
   health: "/health",
 } as const;
 
