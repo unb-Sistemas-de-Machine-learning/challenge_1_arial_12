@@ -99,6 +99,9 @@ def _registrar_erro_interno(request: Request, exc: Exception) -> None:
             settings.openai_api_key.get_secret_value()
             if settings.openai_api_key
             else None,
+            settings.openalex_api_key.get_secret_value()
+            if settings.openalex_api_key
+            else None,
         ]
         for valor in valores_sensiveis:
             if valor:

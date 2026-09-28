@@ -1,0 +1,33 @@
+meta {
+  name: Busca - buscar na OpenAlex
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/buscar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "buscas": [
+      "polylaminin spinal cord injury",
+      "polylaminin regeneration"
+    ],
+    "limite": 5
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.trabalhos: isDefined
+}
+
+docs {
+  Exige OPENALEX_MAILTO preenchido. Bate na OpenAlex de
+  verdade. Devolve o top 5 que a OpenAlex ja ordenou por relevancia. Com duas
+  buscas a lista intercala por posicao: 1o de cada, depois 2o de cada.
+  "total_por_busca" diz quantos casaram ao todo antes do corte.
+}

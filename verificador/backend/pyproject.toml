@@ -14,3 +14,11 @@ testpaths = ["src/tests"]
 # e coletado e ignorado em silencio, e a suite fica verde sem ter rodado nada.
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
+# A marca "rede" fica de fora da execucao padrao: o unico teste que a usa fala
+# com a OpenAlex de verdade, e um servico de terceiro fora do ar viraria um
+# check vermelho que nao aponta defeito nenhum no projeto. Para rodar so ele:
+#   pytest -m rede
+addopts = "-m 'not rede'"
+markers = [
+    "rede: chama um servico externo de verdade; excluido da execucao padrao",
+]

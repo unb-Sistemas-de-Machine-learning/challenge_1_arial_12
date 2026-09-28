@@ -1,0 +1,22 @@
+meta {
+  name: Verificar - corpo invalido (422)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/verificar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "url": "faltou o trecho"
+  }
+}
+
+assert {
+  res.status: eq 422
+  res.body.codigo: eq entrada_invalida
+}

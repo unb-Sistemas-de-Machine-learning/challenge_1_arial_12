@@ -1,0 +1,31 @@
+meta {
+  name: Busca - consulta booleana
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/buscar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "buscas": [
+      "(\"Service Design\" OR \"User-centric\" OR \"User Experience\" OR \"UX\" OR \"Design Thinking\") AND (\"ITSM\" OR \"IT Service Management\" OR \"ITIL\" OR \"Enterprise Service Management\") AND (\"service catalog\" OR \"service portal\" OR \"digital platform\" OR \"self-service portal\")"
+    ],
+    "quantidade": 5
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Aspas para frase exata, AND/OR/NOT em maiusculas e parenteses para agrupar.
+  Os parenteses agrupam de verdade: sem eles a mesma consulta devolve uma
+  ordem de grandeza a menos. As aspas internas vao escapadas porque o corpo
+  e JSON.
+}

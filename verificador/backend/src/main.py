@@ -1,5 +1,6 @@
 """Fábrica e ponto de entrada ASGI da API."""
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -13,6 +14,7 @@ from src.api.gateway.middlewares import (
 )
 from src.core.config import settings as settings_module
 from src.core.database.session import criar_fabrica_de_sessoes, criar_motor
+from src.services.openalex import encerrar_cliente_compartilhado
 
 
 @asynccontextmanager
@@ -31,6 +33,7 @@ async def ciclo_de_vida(api: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await motor.dispose()
+        await encerrar_cliente_compartilhado()
 
 
 def criar_app() -> FastAPI:
@@ -50,6 +53,14 @@ def criar_app() -> FastAPI:
         expose_headers=[HEADER_CORRELACAO],
     )
     api.include_router(router)
+    if not settings.openalex_mailto:
+        # O corpo de erro é fechado por contrato e não pode nomear a variável
+        # que falta. Sem este aviso, quem sobe o servidor só descobre no
+        # primeiro 503, com uma mensagem que não ajuda a achar a causa.
+        logging.getLogger("verificador.gateway").warning(
+            "POST /buscar está registrada, mas OPENALEX_MAILTO está vazio: "
+            "toda busca vai responder 503 até o .env ser preenchido"
+        )
     return api
 
 
