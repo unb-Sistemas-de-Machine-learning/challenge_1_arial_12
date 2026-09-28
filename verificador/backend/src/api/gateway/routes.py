@@ -89,8 +89,10 @@ async def persistir_feedback(fabrica_de_sessoes, veredicto_id: int, util: bool):
 async def receber_feedback(
     request: Request,
     background_tasks: BackgroundTasks,
-    pedido: FeedbackRequest = Body(...)
+    pedido: FeedbackRequest = Body(...),
 ) -> FeedbackResponse:
     fabrica = request.app.state.fabrica_de_sessoes
-    background_tasks.add_task(persistir_feedback, fabrica, pedido.veredicto_id, pedido.util)
+    background_tasks.add_task(
+        persistir_feedback, fabrica, pedido.veredicto_id, pedido.util
+    )
     return FeedbackResponse(status="recebido")
