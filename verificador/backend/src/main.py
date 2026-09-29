@@ -1,6 +1,7 @@
 """Fábrica e ponto de entrada ASGI da API."""
 
 import time
+import logging
 from collections.abc import AsyncIterator, Callable
 
 from contextlib import asynccontextmanager
