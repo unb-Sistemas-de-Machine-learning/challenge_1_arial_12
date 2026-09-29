@@ -23,6 +23,8 @@ verificador/
 │   └── .venv/             # criado localmente
 ├── extensao/
 │   ├── wxt.config.ts      # manifest por navegador (Chrome MV3 / Firefox MV2)
+│   ├── config.ts          # base do back-end (WXT_API_BASE_URL) e rotas
+│   ├── .env.example       # modelo do .env com a base do back-end
 │   ├── tipos.ts           # contrato JSON compartilhado
 │   └── entrypoints/
 │       ├── background.ts  # faz o fetch ao back-end
@@ -90,7 +92,14 @@ O healthcheck responde em `http://localhost:8000/health` com `{"ok":true}`.
 O backend lê `.env` na inicialização. `DATABASE_URL` precisa estar preenchida,
 mas o healthcheck não conecta ao banco; `OPENAI_API_KEY` e `OPENALEX_MAILTO` podem ficar
 vazios nesta fase. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
-mantém `['*']`.
+mantém `['*']` — use isso só em desenvolvimento (`APP_DEBUG=true`); fora dele,
+configure a lista com a origem real da extensão publicada.
+
+Toda rota, exceto `/health`, tem um limite de requisições por origem
+(cabeçalho `Origin`, ou o IP da conexão quando ele falta). Passar do limite
+responde `429` com `Retry-After` em segundos até a janela reiniciar.
+`RATE_LIMIT_MAX_REQUESTS` (padrão `30`) e `RATE_LIMIT_WINDOW_SECONDS` (padrão
+`60`) controlam o limite e a janela; a contagem é em memória, por processo.
 
 ### Erros do gateway
 
@@ -270,7 +279,7 @@ funciona em qualquer clone, nos três sistemas — não edite o arquivo à mão.
 4. Em menos de um segundo o painel troca para:
    - badge laranja **EXAGERA**
    - justificativa `(mock) Resposta de teste — a IA entra na Fase 04.`
-   - o estudo `(mock) Estudo de exemplo · 2019 · doi:10.0000/mock`
+   - o estudo `(mock) Estudo de exemplo · 2019` e o link **Abrir publicação (DOI: 10.0000/mock)**, que abre `https://doi.org/10.0000/mock` em nova aba
    - as três tags `polylaminin`, `spinal cord injury`, `regeneration`
 5. **Olhe o terminal 1 (uvicorn).** Deve ter impresso exatamente o trecho que
    você selecionou:
@@ -288,6 +297,14 @@ funciona em qualquer clone, nos três sistemas — não edite o arquivo à mão.
 7. **Repita tudo no outro navegador**, se tiver o Chrome (`npm run dev`).
 8. Feche o painel no `×` e confirme que uma nova seleção reabre o fluxo.
 
+### Painel de veredicto — roteiro da task #15
+
+- Confira que o link do DOI abre em outra aba; o painel original permanece aberto.
+- Pare o backend e verifique novamente. O painel deve exibir uma mensagem de conexão em português e o botão **Tentar novamente**, sem mostrar `localhost`, porta ou stack. Reinicie o backend e clique em **Tentar novamente** sem selecionar outro trecho; o mesmo texto deve ser enviado.
+- Para testar o cancelamento, clique em **Verificar** e feche o painel enquanto ele mostra **Verificando…**. A resposta tardia não pode reabrir o painel.
+- Confira os estados **Sustenta**, **Exagera** e **Nada encontrado**, além do aviso **Estudo retratado** e do erro. O backend atual devolve apenas o veredito mock **Exagera**; os outros estados exigem respostas simuladas ou uma integração futura. Não trate o build como evidência de teste visual desses estados.
+- Repita no Chrome e no Firefox; anexe capturas dos três estados e do erro ao PR. Os testes automatizados da apresentação ficam em `extensao/tests/` e podem ser executados com `npm test`.
+
 ## Checklist da Fase 01
 
 - [ ] Selecionar texto faz surgir o botão "Verificar"
@@ -302,7 +319,7 @@ funciona em qualquer clone, nos três sistemas — não edite o arquivo à mão.
 
 | Sintoma | Causa provável |
 |---|---|
-| Painel mostra **ERRO: Failed to fetch** | uvicorn não está rodando, ou está em outra porta |
+| Painel mostra **ERRO: Failed to fetch** | uvicorn não está rodando, está em outra porta, ou o build aponta para outra base — o console do background imprime a base ativa ao iniciar |
 | O botão não aparece | selecione 10+ caracteres; recarregue a página (o content script só entra em páginas carregadas **depois** da extensão) |
 | Nada acontece ao clicar | abra o console do background (Chrome: `chrome://extensions` → *service worker*; Firefox: `about:debugging#/runtime/this-firefox` → *Inspecionar*) e veja os logs `[verificador]` |
 | Painel sem estilo / quebrado | é shadow DOM `closed`, o CSS da página não deveria vazar — reporte a URL |
@@ -320,6 +337,47 @@ npm run build:firefox    # gera .output/firefox-mv2
   compactação* → selecione `.output/chrome-mv3`
 - **Firefox:** `about:debugging#/runtime/this-firefox` → *Carregar extensão
   temporária* → selecione `.output/firefox-mv2/manifest.json`
+
+## Apontar o build para outro back-end
+
+A URL do back-end não está escrita no código: ela vem de `WXT_API_BASE_URL`,
+lida **no momento do build**. Sem a variável, vale `http://localhost:8000`.
+
+```bash
+cd verificador/extensao
+WXT_API_BASE_URL=https://api.exemplo.com npm run build
+WXT_API_BASE_URL=https://api.exemplo.com npm run build:firefox
+```
+
+Para não repetir a variável a cada comando, copie o exemplo e edite:
+
+```bash
+cp .env.example .env      # só na primeira vez; o .env não entra no versionamento
+```
+
+A variável vale para `dev`, `build` e `zip`, nos dois navegadores. O prefixo
+`WXT_` é obrigatório: é ele que faz o valor chegar ao código empacotado.
+
+Mudar o valor muda três coisas de uma vez, sem editar arquivo nenhum:
+
+- o `background.ts` passa a chamar `<base>/verificar`;
+- as `host_permissions` do manifest passam a pedir apenas `<base>/*` — o build
+  não sai com permissão para um host que não vai usar;
+- o console do background imprime a base ativa ao iniciar
+  (`[verificador] background pronto — https://api.exemplo.com/verificar`), que
+  é a forma mais rápida de descobrir para onde um `.output/` aponta.
+
+A base precisa ser uma URL absoluta `http` ou `https`, sem query nem fragmento.
+Fora disso o build falha com a mensagem do erro, em vez de gerar um artefato
+que só quebra no primeiro `fetch` do usuário.
+
+Os caminhos das rotas (`/verificar`, `/health`) ficam em `extensao/config.ts` —
+é o único arquivo a mudar quando o back-end ganhar uma rota nova. Nenhum
+entrypoint monta URL por conta própria.
+
+Trocar de back-end exige recarregar a extensão (`npm run dev` já faz isso; no
+build manual, recarregue o `.output/`): a permissão de host vive no manifest,
+lido só na instalação.
 
 ## Notas de compatibilidade
 
@@ -402,7 +460,7 @@ Depois volte ao Xcode e dê ⌘R. Não precisa reconverter.
 |---|---|
 | Extensão sumiu da lista | *Permitir Extensões Não Assinadas* desligou no restart |
 | Botão não aparece em site nenhum | acesso a sites está em *Perguntar*; mude para *Permitir em Todos os Sites* |
-| **Failed to fetch** só no Safari | o Safari é mais rígido com `localhost`; confirme que o uvicorn está de pé e teste `http://127.0.0.1:8000/health` no próprio Safari |
+| **Failed to fetch** só no Safari | o Safari é mais rígido com `localhost`; confirme que o uvicorn está de pé, teste `http://127.0.0.1:8000/health` no próprio Safari e, se for o caso, refaça o build com `WXT_API_BASE_URL=http://127.0.0.1:8000` |
 | `xcrun: error: unable to find utility` | Xcode não instalado ou `xcode-select` apontando para as CLT |
 
 ## Próxima migração

@@ -1,6 +1,7 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { defineConfig } from "wxt";
+import { permissoesDeHost } from "./config";
 
 // Caminho da pagina de teste resolvido a partir DESTE arquivo, nao da maquina
 // de quem clonou: extensao/wxt.config.ts -> ../pagina-teste.html.
@@ -18,8 +19,10 @@ export default defineConfig({
     description:
       "Seleciona um trecho de uma materia e verifica se ha estudo publicado por tras.",
     // O service worker (Chrome) / background script (Firefox) precisa alcancar
-    // o back-end local. O content script NAO faz fetch — ver entrypoints/.
-    host_permissions: ["http://localhost:8000/*", "http://127.0.0.1:8000/*"],
+    // o back-end. O content script NAO faz fetch — ver entrypoints/.
+    // A lista sai da mesma WXT_API_BASE_URL que o background usa (config.ts):
+    // o build nunca pede permissao para um host que ele nao vai chamar.
+    host_permissions: permissoesDeHost(),
     ...(browser === "firefox"
       ? {
           // Declara que a extensao nao coleta dados do usuario.

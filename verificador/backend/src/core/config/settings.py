@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     openalex_timeout_segundos: float = Field(default=10.0, gt=0)
     openalex_max_tentativas: int = Field(default=3, ge=1, le=5)
     cors_origins: list[str] = Field(default_factory=lambda: ["*"])
+    rate_limit_max_requests: int = 30
+    rate_limit_window_seconds: int = 60
 
     @field_validator("database_url", mode="before")
     @classmethod

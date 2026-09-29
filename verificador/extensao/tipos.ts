@@ -10,6 +10,7 @@ export interface Estudo {
 }
 
 export interface Veredito {
+  id: number | null;
   estado: Estado;
   estudo: Estudo | null;
   termos: string[];
@@ -36,11 +37,25 @@ export interface ErroApi {
 /** Mensagem content script -> background. */
 export interface PedidoVerificar {
   tipo: "verificar";
+  id: string;
   trecho: string;
   url: string;
 }
 
+export interface PedidoCancelar {
+  tipo: "cancelar";
+  id: string;
+}
+
+export interface PedidoFeedback {
+  tipo: "feedback";
+  veredicto_id: number;
+  util: boolean;
+}
+
+export type CodigoErroExtensao = CodigoErroApi | "falha_rede" | "cancelada";
+
 /** Resposta background -> content script: ou o veredito, ou um erro. */
 export type RespostaVerificar =
   | { ok: true; veredito: Veredito }
-  | { ok: false; erro: string };
+  | { ok: false; codigo: CodigoErroExtensao };
