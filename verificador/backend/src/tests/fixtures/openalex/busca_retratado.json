@@ -1,0 +1,1236 @@
+{
+  "meta": {
+    "count": 834,
+    "db_response_time_ms": 50,
+    "page": 1,
+    "per_page": 2,
+    "groups_count": null,
+    "x_query": {
+      "oql": "works where full text has (spinal cord injury) and retracted is (true)",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "fulltext.search",
+            "value": "spinal cord injury",
+            "operator": "has"
+          },
+          {
+            "column_id": "is_retracted",
+            "value": true
+          }
+        ]
+      },
+      "url": "/works?filter=fulltext.search:spinal cord injury,is_retracted:true&per_page=2"
+    },
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W2133575487",
+      "display_name": "Activated Protein C Reduces the Severity of Compression-Induced Spinal Cord Injury in Rats by Inhibiting Activation of Leukocytes",
+      "title": "Activated Protein C Reduces the Severity of Compression-Induced Spinal Cord Injury in Rats by Inhibiting Activation of Leukocytes",
+      "publication_year": 1998,
+      "doi": "https://doi.org/10.1523/jneurosci.18-04-01393.1998",
+      "is_retracted": true,
+      "abstract_inverted_index": {
+        "Activated": [
+          0
+        ],
+        "protein": [
+          1
+        ],
+        "C": [
+          2
+        ],
+        "(APC),": [
+          3
+        ],
+        "an": [
+          4,
+          43,
+          82
+        ],
+        "important": [
+          5,
+          44
+        ],
+        "inhibitor": [
+          6,
+          92
+        ],
+        "of": [
+          7,
+          23,
+          50,
+          61,
+          69,
+          85,
+          93,
+          130,
+          138,
+          144,
+          171,
+          188,
+          215,
+          220
+        ],
+        "the": [
+          8,
+          21,
+          48,
+          67,
+          73,
+          102,
+          120,
+          127,
+          136,
+          141,
+          145,
+          152,
+          174,
+          194,
+          213,
+          218,
+          227,
+          231
+        ],
+        "coagulation": [
+          9
+        ],
+        "system,": [
+          10
+        ],
+        "has": [
+          11
+        ],
+        "recently": [
+          12
+        ],
+        "been": [
+          13
+        ],
+        "shown": [
+          14
+        ],
+        "to": [
+          15,
+          197,
+          230
+        ],
+        "prevent": [
+          16,
+          31
+        ],
+        "tissue": [
+          17,
+          128,
+          186
+        ],
+        "injury": [
+          18,
+          35
+        ],
+        "by": [
+          19,
+          57,
+          211
+        ],
+        "blocking": [
+          20
+        ],
+        "activation": [
+          22
+        ],
+        "leukocytes.": [
+          24
+        ],
+        "To": [
+          25
+        ],
+        "determine": [
+          26
+        ],
+        "whether": [
+          27
+        ],
+        "APC": [
+          28,
+          51,
+          99,
+          206
+        ],
+        "can": [
+          29
+        ],
+        "also": [
+          30
+        ],
+        "post-traumatic": [
+          32
+        ],
+        "spinal": [
+          33,
+          146
+        ],
+        "cord": [
+          34,
+          147
+        ],
+        "(SCI),": [
+          36
+        ],
+        "a": [
+          37,
+          90
+        ],
+        "condition": [
+          38
+        ],
+        "in": [
+          39,
+          55,
+          76,
+          119,
+          126,
+          140,
+          151,
+          163,
+          179,
+          193,
+          204
+        ],
+        "which": [
+          40
+        ],
+        "leukocytes": [
+          41
+        ],
+        "play": [
+          42
+        ],
+        "role,": [
+          45
+        ],
+        "we": [
+          46
+        ],
+        "tested": [
+          47
+        ],
+        "effects": [
+          49
+        ],
+        "on": [
+          52
+        ],
+        "SCI": [
+          53
+        ],
+        "induced": [
+          54
+        ],
+        "rats": [
+          56
+        ],
+        "compression": [
+          58
+        ],
+        "trauma.": [
+          59
+        ],
+        "Administration": [
+          60
+        ],
+        "APC,": [
+          62,
+          157,
+          178
+        ],
+        "either": [
+          63
+        ],
+        "before": [
+          64
+        ],
+        "or": [
+          65,
+          167
+        ],
+        "after": [
+          66,
+          114
+        ],
+        "induction": [
+          68,
+          170
+        ],
+        "SCI,": [
+          70,
+          205
+        ],
+        "markedly": [
+          71
+        ],
+        "reduced": [
+          72,
+          101,
+          118,
+          183
+        ],
+        "motor": [
+          74,
+          103,
+          184,
+          208
+        ],
+        "disturbances": [
+          75,
+          209
+        ],
+        "these": [
+          77,
+          159
+        ],
+        "animals.": [
+          78
+        ],
+        "In": [
+          79
+        ],
+        "contrast,": [
+          80
+        ],
+        "neither": [
+          81
+        ],
+        "inactive": [
+          83
+        ],
+        "derivative": [
+          84
+        ],
+        "activated": [
+          86
+        ],
+        "factor": [
+          87
+        ],
+        "X": [
+          88
+        ],
+        "(DEGR-Xa),": [
+          89
+        ],
+        "selective": [
+          91
+        ],
+        "thrombin": [
+          94
+        ],
+        "generation,": [
+          95
+        ],
+        "nor": [
+          96
+        ],
+        "active": [
+          97
+        ],
+        "site-blocked": [
+          98
+        ],
+        "(DIP-APC)": [
+          100
+        ],
+        "disturbances.": [
+          104
+        ],
+        "Histological": [
+          105
+        ],
+        "examination": [
+          106
+        ],
+        "revealed": [
+          107
+        ],
+        "that": [
+          108,
+          154,
+          180,
+          203
+        ],
+        "intramedullary": [
+          109
+        ],
+        "hemorrhages,": [
+          110
+        ],
+        "observed": [
+          111
+        ],
+        "24": [
+          112
+        ],
+        "hr": [
+          113
+        ],
+        "trauma,": [
+          115
+        ],
+        "were": [
+          116,
+          148,
+          160
+        ],
+        "significantly": [
+          117,
+          149,
+          182
+        ],
+        "animals": [
+          121,
+          153,
+          195
+        ],
+        "administered": [
+          122,
+          165
+        ],
+        "APC.": [
+          123
+        ],
+        "The": [
+          124,
+          169
+        ],
+        "increase": [
+          125
+        ],
+        "level": [
+          129
+        ],
+        "tumor": [
+          131
+        ],
+        "necrosis": [
+          132
+        ],
+        "factor-alpha": [
+          133
+        ],
+        "(TNF-alpha)": [
+          134
+        ],
+        "and": [
+          135,
+          190,
+          226
+        ],
+        "accumulation": [
+          137,
+          192,
+          225
+        ],
+        "neutrophils": [
+          139
+        ],
+        "damaged": [
+          142
+        ],
+        "segment": [
+          143
+        ],
+        "inhibited": [
+          150,
+          162
+        ],
+        "had": [
+          155,
+          173
+        ],
+        "received": [
+          156
+        ],
+        "but": [
+          158
+        ],
+        "not": [
+          161
+        ],
+        "those": [
+          164
+        ],
+        "DIP-APC": [
+          166
+        ],
+        "DEGR-Xa.": [
+          168
+        ],
+        "leukocytopenia": [
+          172
+        ],
+        "same": [
+          175
+        ],
+        "effect": [
+          176
+        ],
+        "as": [
+          177
+        ],
+        "it": [
+          181
+        ],
+        "disturbances,": [
+          185
+        ],
+        "levels": [
+          187
+        ],
+        "TNF-alpha,": [
+          189
+        ],
+        "neutrophil": [
+          191,
+          224
+        ],
+        "subjected": [
+          196
+        ],
+        "compressive": [
+          198
+        ],
+        "SCI.": [
+          199
+        ],
+        "These": [
+          200
+        ],
+        "findings": [
+          201
+        ],
+        "suggest": [
+          202
+        ],
+        "reduces": [
+          207
+        ],
+        "primarily": [
+          210
+        ],
+        "reducing": [
+          212
+        ],
+        "amount": [
+          214
+        ],
+        "TNF-alpha": [
+          216
+        ],
+        "at": [
+          217
+        ],
+        "site": [
+          219
+        ],
+        "injury,": [
+          221
+        ],
+        "thus": [
+          222
+        ],
+        "inhibiting": [
+          223
+        ],
+        "resultant": [
+          228
+        ],
+        "damage": [
+          229
+        ],
+        "endothelial": [
+          232
+        ],
+        "cells.": [
+          233
+        ]
+      },
+      "relevance_score": 1298.8727,
+      "cited_by_count": 119
+    },
+    {
+      "id": "https://openalex.org/W2604392357",
+      "display_name": "RETRACTED: Long Coding RNA XIST Contributes to Neuronal Apoptosis through the Downregulation of AKT Phosphorylation and Is Negatively Regulated by miR-494 in Rat Spinal Cord Injury",
+      "title": "RETRACTED: Long Coding RNA XIST Contributes to Neuronal Apoptosis through the Downregulation of AKT Phosphorylation and Is Negatively Regulated by miR-494 in Rat Spinal Cord Injury",
+      "publication_year": 2017,
+      "doi": "https://doi.org/10.3390/ijms18040732",
+      "is_retracted": true,
+      "abstract_inverted_index": {
+        "Recent": [
+          0
+        ],
+        "evidence": [
+          1
+        ],
+        "has": [
+          2
+        ],
+        "suggested": [
+          3,
+          158,
+          232
+        ],
+        "that": [
+          4,
+          125,
+          159,
+          211,
+          233,
+          250,
+          296
+        ],
+        "long": [
+          5,
+          83
+        ],
+        "non-coding": [
+          6,
+          84
+        ],
+        "RNAs": [
+          7
+        ],
+        "(lncRNAs)": [
+          8
+        ],
+        "may": [
+          9,
+          161,
+          236,
+          298
+        ],
+        "play": [
+          10,
+          237
+        ],
+        "a": [
+          11,
+          116,
+          132,
+          164,
+          170,
+          300
+        ],
+        "significant": [
+          12
+        ],
+        "role": [
+          13,
+          32,
+          240
+        ],
+        "in": [
+          14,
+          35,
+          51,
+          77,
+          101,
+          149,
+          201,
+          241,
+          245,
+          289
+        ],
+        "the": [
+          15,
+          31,
+          40,
+          46,
+          56,
+          78,
+          96,
+          102,
+          145,
+          215,
+          226,
+          251,
+          266,
+          279,
+          282,
+          285,
+          290
+        ],
+        "pathogenesis": [
+          16,
+          79,
+          291
+        ],
+        "of": [
+          17,
+          33,
+          39,
+          49,
+          59,
+          80,
+          95,
+          127,
+          144,
+          177,
+          205,
+          218,
+          255,
+          268,
+          284,
+          292
+        ],
+        "several": [
+          18
+        ],
+        "neurological": [
+          19
+        ],
+        "diseases,": [
+          20
+        ],
+        "including": [
+          21
+        ],
+        "spinal": [
+          22,
+          151,
+          202
+        ],
+        "cord": [
+          23,
+          152,
+          203
+        ],
+        "injury": [
+          24
+        ],
+        "(SCI).": [
+          25
+        ],
+        "However,": [
+          26
+        ],
+        "little": [
+          27
+        ],
+        "is": [
+          28,
+          107
+        ],
+        "known": [
+          29
+        ],
+        "about": [
+          30
+        ],
+        "lncRNAs": [
+          34,
+          50,
+          72,
+          100
+        ],
+        "SCI.": [
+          36,
+          81
+        ],
+        "The": [
+          37,
+          82
+        ],
+        "aim": [
+          38
+        ],
+        "present": [
+          41
+        ],
+        "study": [
+          42,
+          209
+        ],
+        "was": [
+          43,
+          90,
+          199
+        ],
+        "to": [
+          44,
+          54,
+          69,
+          92,
+          175
+        ],
+        "evaluate": [
+          45
+        ],
+        "potential": [
+          47
+        ],
+        "functions": [
+          48
+        ],
+        "SCI": [
+          52,
+          137,
+          206,
+          222,
+          293,
+          305
+        ],
+        "and": [
+          53,
+          106,
+          119,
+          182,
+          197,
+          249,
+          294
+        ],
+        "identify": [
+          55
+        ],
+        "underlying": [
+          57
+        ],
+        "mechanisms": [
+          58
+        ],
+        "action.": [
+          60
+        ],
+        "We": [
+          61,
+          123
+        ],
+        "firstly": [
+          62
+        ],
+        "analyzed": [
+          63
+        ],
+        "Gene": [
+          64
+        ],
+        "Expression": [
+          65
+        ],
+        "Omnibus": [
+          66
+        ],
+        "(GEO)": [
+          67
+        ],
+        "datasets": [
+          68
+        ],
+        "investigate": [
+          70
+        ],
+        "aberrantly-expressed": [
+          71
+        ],
+        "which": [
+          73
+        ],
+        "might": [
+          74,
+          258
+        ],
+        "be": [
+          75,
+          93,
+          299
+        ],
+        "involved": [
+          76
+        ],
+        "RNA": [
+          85
+        ],
+        "X-inactive": [
+          86
+        ],
+        "specific": [
+          87
+        ],
+        "transcript": [
+          88
+        ],
+        "(XIST)": [
+          89
+        ],
+        "found": [
+          91,
+          124
+        ],
+        "one": [
+          94
+        ],
+        "most": [
+          97
+        ],
+        "significantly": [
+          98
+        ],
+        "upregulated": [
+          99
+        ],
+        "GEO": [
+          103
+        ],
+        "dataset": [
+          104
+        ],
+        "analysis,": [
+          105
+        ],
+        "associated": [
+          108
+        ],
+        "with": [
+          109
+        ],
+        "apoptosis.": [
+          110
+        ],
+        "We,": [
+          111
+        ],
+        "therefore,": [
+          112
+        ],
+        "selected": [
+          113
+        ],
+        "this": [
+          114
+        ],
+        "as": [
+          115,
+          163
+        ],
+        "candidate": [
+          117
+        ],
+        "lncRNA": [
+          118
+        ],
+        "investigated": [
+          120
+        ],
+        "its": [
+          121,
+          178,
+          263
+        ],
+        "function.": [
+          122
+        ],
+        "knockdown": [
+          126,
+          220,
+          235,
+          257
+        ],
+        "lncRNA-XIST": [
+          128,
+          160,
+          196,
+          219,
+          234,
+          256,
+          297
+        ],
+        "by": [
+          129,
+          139,
+          262,
+          270
+        ],
+        "Lv-shRNA": [
+          130
+        ],
+        "had": [
+          131
+        ],
+        "prominent": [
+          133
+        ],
+        "protective": [
+          134,
+          216,
+          253
+        ],
+        "effect": [
+          135
+        ],
+        "on": [
+          136,
+          186,
+          221,
+          265
+        ],
+        "recovery": [
+          138
+        ],
+        "suppressing": [
+          140
+        ],
+        "apoptosis": [
+          141,
+          244
+        ],
+        "through": [
+          142,
+          224
+        ],
+        "reactivation": [
+          143
+        ],
+        "PI3K/AKT": [
+          146
+        ],
+        "signaling": [
+          147,
+          228,
+          287
+        ],
+        "pathway": [
+          148
+        ],
+        "rat": [
+          150
+        ],
+        "tissue.": [
+          153
+        ],
+        "In": [
+          154,
+          190
+        ],
+        "particular,": [
+          155
+        ],
+        "our": [
+          156
+        ],
+        "results": [
+          157,
+          231
+        ],
+        "act": [
+          162
+        ],
+        "competitive": [
+          165
+        ],
+        "endogenous": [
+          166
+        ],
+        "RNA,": [
+          167
+        ],
+        "effectively": [
+          168
+        ],
+        "becoming": [
+          169
+        ],
+        "sink": [
+          171
+        ],
+        "for": [
+          172,
+          278,
+          304
+        ],
+        "miR-494,": [
+          173
+        ],
+        "leading": [
+          174
+        ],
+        "derepression": [
+          176
+        ],
+        "target": [
+          179,
+          303
+        ],
+        "gene,": [
+          180
+        ],
+        "phosphatase": [
+          181
+        ],
+        "tensin": [
+          183
+        ],
+        "homolog": [
+          184
+        ],
+        "deleted": [
+          185
+        ],
+        "chromosome": [
+          187
+        ],
+        "ten": [
+          188
+        ],
+        "(PTEN).": [
+          189
+        ],
+        "addition,": [
+          191
+        ],
+        "an": [
+          192,
+          238
+        ],
+        "inverse": [
+          193
+        ],
+        "relationship": [
+          194
+        ],
+        "between": [
+          195
+        ],
+        "miR-494": [
+          198
+        ],
+        "observed": [
+          200,
+          252
+        ],
+        "tissues": [
+          204
+        ],
+        "rats.": [
+          207
+        ],
+        "Further": [
+          208
+        ],
+        "demonstrated": [
+          210
+        ],
+        "antagomiR-494": [
+          212
+        ],
+        "could": [
+          213
+        ],
+        "reverse": [
+          214
+        ],
+        "effects": [
+          217,
+          254
+        ],
+        "rats": [
+          223,
+          246
+        ],
+        "blocking": [
+          225
+        ],
+        "PTEN/PI3K/AKT": [
+          227
+        ],
+        "pathway.": [
+          229
+        ],
+        "These": [
+          230,
+          274
+        ],
+        "important": [
+          239
+        ],
+        "limiting": [
+          242
+        ],
+        "neuronal": [
+          243
+        ],
+        "following": [
+          247
+        ],
+        "SCI,": [
+          248
+        ],
+        "have": [
+          259,
+          276
+        ],
+        "been": [
+          260
+        ],
+        "mediated": [
+          261
+        ],
+        "regulation": [
+          264
+        ],
+        "phosphorylation": [
+          267
+        ],
+        "AKT": [
+          269
+        ],
+        "competitively": [
+          271
+        ],
+        "binding": [
+          272
+        ],
+        "miR-494.": [
+          273
+        ],
+        "findings": [
+          275
+        ],
+        "revealed,": [
+          277
+        ],
+        "first": [
+          280
+        ],
+        "time,": [
+          281
+        ],
+        "importance": [
+          283
+        ],
+        "XIST/miR-494/PTEN/AKT": [
+          286
+        ],
+        "axis": [
+          288
+        ],
+        "suggest": [
+          295
+        ],
+        "promising": [
+          301
+        ],
+        "molecular": [
+          302
+        ],
+        "therapy.": [
+          306
+        ]
+      },
+      "relevance_score": 1088.5778,
+      "cited_by_count": 118
+    }
+  ],
+  "group_by": []
+}

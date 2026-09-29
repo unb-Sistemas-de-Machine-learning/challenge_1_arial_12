@@ -121,8 +121,127 @@ mostrar detalhes técnicos da resposta.
 | 500 e demais `5xx` | `erro_interno` | Não foi possível concluir a verificação agora. |
 
 Se não houver resposta HTTP, a extensão mostra uma mensagem local de falha de
-conexão. A integração real com OpenAlex e LLM ainda não está ativa; seus códigos
-de erro ficam definidos para as próximas etapas.
+conexão. A rota `/verificar` ainda devolve o veredito mock: nem a busca na
+OpenAlex nem o LLM estão ligados a ela.
+
+### Busca na OpenAlex (spec 002)
+
+`POST /buscar` recebe uma **lista** de strings de busca e devolve os trabalhos
+numa lista única, sem repetição. Por baixo é
+[`src/services/openalex.py`](backend/src/services/openalex.py): `httpx` sobre a
+API REST da OpenAlex, sem camada de protocolo no meio.
+
+`POST /verificar` **ainda não chama a busca** — continua devolvendo o veredito
+mock até o Juiz existir.
+
+Cada string vai para a OpenAlex sem alteração, então a sintaxe dela vale: aspas
+para frase exata, `AND`, `OR` e `NOT` em maiúsculas, e parênteses para agrupar.
+Os parênteses **agrupam de verdade** — a mesma consulta devolve 4.293 resultados
+agrupada e 189 sem eles, então não os remova ao montar a busca.
+
+Configure o e-mail do *polite pool* antes de usar; sem ele o cliente recusa a
+subir:
+
+```bash
+OPENALEX_MAILTO=contato-da-equipe@exemplo.org
+OPENALEX_API_KEY=                  # gratuita; veja o aviso abaixo
+OPENALEX_RESULTADOS_POR_BUSCA=10   # por busca, teto de 50
+OPENALEX_TIMEOUT_SEGUNDOS=10
+OPENALEX_MAX_TENTATIVAS=3          # 429, 5xx e timeout são repetidos
+```
+
+> **A chave importa mais do que parece.** Sob carga, a OpenAlex responde `503`
+> com *"Anonymous search is paused… use a free API key"* — e considera anônimo
+> quem manda só o `mailto`. A chave é gratuita em
+> <https://openalex.org/rest-api>. Sem ela a busca funciona, mas de forma
+> intermitente. A chave vai no cabeçalho `Authorization`, nunca na URL.
+
+Experimente pelo venv, sem subir a API:
+
+```bash
+cd verificador/backend
+python3 - <<'FIM'
+import asyncio
+from src.services.openalex import ClienteOpenAlex
+
+async def principal():
+    buscas = ["polylaminin spinal cord injury", "polylaminin regeneration"]
+    async with ClienteOpenAlex.a_partir_das_configuracoes() as cliente:
+        resultado = await cliente.buscar_varias(buscas, quantidade=3)
+    for trabalho in resultado.trabalhos:
+        print(trabalho.id, trabalho.ano, trabalho.doi, trabalho.titulo)
+    for busca, motivo in resultado.falhas.items():
+        print("falhou:", busca, "->", motivo)
+
+asyncio.run(principal())
+FIM
+```
+
+Cada trabalho vem com `id` (`W2110406916`), `titulo`, `ano`, `doi` (forma curta,
+sem `https://doi.org/`), `retratado`, `abstract`, `relevancia` e `citacoes`.
+Registro incompleto devolve `None` no campo que falta, e não derruba a busca.
+
+### Quantos trabalhos vêm, e quais
+
+**Cinco, por padrão** — o top 5 que a OpenAlex já ordenou por relevância. Não há
+reclassificação nossa, nem clusterização: ela ordena, a gente aproveita.
+
+Isso importa por causa da conta. Uma consulta de revisão sistemática casa com
+milhares de trabalhos, e mandar todos para um LLM é inviável:
+
+| Amostra | Abstracts em tokens |
+| :--- | ---: |
+| top 5 | ~1,4 mil |
+| todos os 4.293 de uma consulta real | ~1,19 milhão |
+
+`total_por_busca` diz quantos casaram ao todo, antes do corte — é a diferença
+entre "achei 5" e "achei 5 de 4.293".
+
+Com **várias** buscas, a lista final intercala por **posição**: o 1º de cada,
+depois o 2º de cada. Não por `relevancia`, porque o escore mede o quanto o
+trabalho casa com *aquela* string, e a escala muda com a string — medido, para o
+mesmo assunto: 870 na formulação curta contra 227 na longa. Ordenar por ele daria
+todas as vagas à busca mais curta.
+
+Três parâmetros:
+
+| Parâmetro | O que faz | Padrão |
+| :--- | :--- | :--- |
+| `limite` | quantos saem no fim | 5 |
+| `quantidade` | candidatos por busca, antes de juntar | 10 (teto 200) |
+| `ordenar_por` | `relevancia`, `citacoes` ou `ano` | `relevancia` |
+
+Fora de `relevancia`, a OpenAlex devolve o campo `relevancia` nulo — ela só o
+calcula quando é o critério. Uma busca que falhar aparece em `resultado.falhas` sem
+levar as outras junto — o erro só sobe como `OpenAlexIndisponivel` se nenhuma
+funcionar. Nenhuma exceção do `httpx` atravessa a fronteira do módulo.
+
+### Testar pelo Postman, Bruno ou curl
+
+```bash
+cd verificador/backend
+python3 -m uvicorn src.main:app --reload --port 8000
+```
+
+```bash
+curl -s -X POST http://localhost:8000/buscar -H 'Content-Type: application/json' \
+  -d '{"buscas":["polylaminin spinal cord injury","polylaminin regeneration"]}'
+```
+
+Há uma coleção Bruno pronta em [`verificador/bruno/`](bruno/README.md), com as
+três rotas e os casos de erro. No Bruno: **Open Collection** → aponte para a
+pasta → ambiente `Local`. No Postman, importe
+`http://localhost:8000/openapi.json`.
+
+Os testes unitários não tocam a rede: usam as respostas gravadas em
+`src/tests/fixtures/openalex/`. O teste que fala com a OpenAlex de verdade está
+marcado `rede` e fica fora da execução padrão — rode à mão quando desconfiar de
+fixture velha:
+
+```bash
+cd verificador/backend
+python3 -m pytest -m rede
+```
 
 ### 2. Extensão (terminal 2)
 

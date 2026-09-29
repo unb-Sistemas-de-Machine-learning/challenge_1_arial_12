@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "count": 0,
+    "db_response_time_ms": 97,
+    "page": 1,
+    "per_page": 5,
+    "groups_count": null,
+    "x_query": {
+      "oql": "works where full text has (zzzqqqxyw nonexistent term 12345)",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "fulltext.search",
+            "value": "zzzqqqxyw nonexistent term 12345",
+            "operator": "has"
+          }
+        ]
+      },
+      "url": "/works?filter=fulltext.search:zzzqqqxyw nonexistent term 12345&per_page=5"
+    },
+    "cost_usd": 0.001
+  },
+  "results": [],
+  "group_by": []
+}

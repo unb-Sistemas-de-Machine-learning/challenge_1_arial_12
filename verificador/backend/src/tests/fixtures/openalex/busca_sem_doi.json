@@ -1,0 +1,804 @@
+{
+  "meta": {
+    "count": 46965,
+    "db_response_time_ms": 473,
+    "page": 1,
+    "per_page": 3,
+    "groups_count": null,
+    "x_query": {
+      "oql": "works where full text has (spinal cord injury) and has DOI is (false)",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "fulltext.search",
+            "value": "spinal cord injury",
+            "operator": "has"
+          },
+          {
+            "column_id": "has_doi",
+            "value": false
+          }
+        ]
+      },
+      "url": "/works?filter=fulltext.search:spinal cord injury,has_doi:false&per_page=3"
+    },
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W1526712929",
+      "display_name": "Causes of death during the first 12 years after spinal cord injury.",
+      "title": "Causes of death during the first 12 years after spinal cord injury.",
+      "publication_year": 1993,
+      "doi": null,
+      "is_retracted": false,
+      "abstract_inverted_index": {
+        "A": [
+          0
+        ],
+        "study": [
+          1,
+          89
+        ],
+        "of": [
+          2,
+          14,
+          36,
+          65,
+          102,
+          110,
+          120
+        ],
+        "9,135": [
+          3
+        ],
+        "persons": [
+          4,
+          55,
+          61,
+          94,
+          138
+        ],
+        "injured": [
+          5,
+          93,
+          137
+        ],
+        "between": [
+          6
+        ],
+        "1973": [
+          7
+        ],
+        "and": [
+          8,
+          10,
+          30,
+          78,
+          83,
+          113,
+          156
+        ],
+        "1984": [
+          9
+        ],
+        "treated": [
+          11
+        ],
+        "at": [
+          12,
+          43
+        ],
+        "any": [
+          13
+        ],
+        "13": [
+          15
+        ],
+        "regional": [
+          16
+        ],
+        "spinal": [
+          17,
+          91,
+          135
+        ],
+        "cord": [
+          18,
+          92,
+          136
+        ],
+        "injury": [
+          19
+        ],
+        "care": [
+          20
+        ],
+        "systems": [
+          21
+        ],
+        "was": [
+          22,
+          48
+        ],
+        "conducted": [
+          23
+        ],
+        "to": [
+          24,
+          100,
+          108,
+          118
+        ],
+        "compare": [
+          25
+        ],
+        "their": [
+          26
+        ],
+        "age-,": [
+          27
+        ],
+        "sex-,": [
+          28
+        ],
+        "race-,": [
+          29
+        ],
+        "cause-specific": [
+          31,
+          131
+        ],
+        "mortality": [
+          32,
+          132
+        ],
+        "rates": [
+          33,
+          133
+        ],
+        "with": [
+          34
+        ],
+        "those": [
+          35
+        ],
+        "the": [
+          37,
+          67,
+          88,
+          126
+        ],
+        "general": [
+          38,
+          127
+        ],
+        "population.": [
+          39,
+          128
+        ],
+        "All": [
+          40
+        ],
+        "subjects": [
+          41
+        ],
+        "survived": [
+          42
+        ],
+        "least": [
+          44
+        ],
+        "24": [
+          45
+        ],
+        "hours.": [
+          46
+        ],
+        "Follow-up": [
+          47
+        ],
+        "terminated": [
+          49
+        ],
+        "in": [
+          50
+        ],
+        "December,": [
+          51
+        ],
+        "1985": [
+          52
+        ],
+        "when": [
+          53
+        ],
+        "854": [
+          54
+        ],
+        "(9.3%)": [
+          56
+        ],
+        "had": [
+          57,
+          62
+        ],
+        "died.": [
+          58
+        ],
+        "Although": [
+          59
+        ],
+        "many": [
+          60,
+          142
+        ],
+        "multiple": [
+          63
+        ],
+        "causes": [
+          64,
+          70
+        ],
+        "death,": [
+          66
+        ],
+        "leading": [
+          68
+        ],
+        "primary": [
+          69
+        ],
+        "were": [
+          71,
+          95
+        ],
+        "pneumonia,": [
+          72
+        ],
+        "nonischemic": [
+          73
+        ],
+        "heart": [
+          74,
+          85
+        ],
+        "disease,": [
+          75
+        ],
+        "septicemia,": [
+          76,
+          103
+        ],
+        "symptoms": [
+          77
+        ],
+        "ill-defined": [
+          79
+        ],
+        "conditions,": [
+          80
+        ],
+        "pulmonary": [
+          81,
+          111
+        ],
+        "emboli,": [
+          82,
+          112
+        ],
+        "ischemic": [
+          84
+        ],
+        "disease.": [
+          86
+        ],
+        "During": [
+          87
+        ],
+        "period,": [
+          90
+        ],
+        "82.2": [
+          96
+        ],
+        "times": [
+          97,
+          105,
+          115
+        ],
+        "more": [
+          98,
+          106,
+          116
+        ],
+        "likely": [
+          99,
+          107,
+          117
+        ],
+        "die": [
+          101,
+          109,
+          119
+        ],
+        "46.9": [
+          104
+        ],
+        "37.1": [
+          114
+        ],
+        "pneumonia": [
+          121
+        ],
+        "than": [
+          122
+        ],
+        "comparable": [
+          123
+        ],
+        "individuals": [
+          124
+        ],
+        "from": [
+          125
+        ],
+        "Though": [
+          129
+        ],
+        "some": [
+          130
+        ],
+        "for": [
+          134,
+          154
+        ],
+        "have": [
+          139
+        ],
+        "declined": [
+          140
+        ],
+        "dramatically,": [
+          141
+        ],
+        "remain": [
+          143
+        ],
+        "substantially": [
+          144
+        ],
+        "above": [
+          145
+        ],
+        "normal.": [
+          146
+        ],
+        "Before": [
+          147
+        ],
+        "life": [
+          148
+        ],
+        "expectancies": [
+          149
+        ],
+        "increase": [
+          150
+        ],
+        "further,": [
+          151
+        ],
+        "improved": [
+          152
+        ],
+        "methods": [
+          153
+        ],
+        "preventing": [
+          155
+        ],
+        "managing": [
+          157
+        ],
+        "these": [
+          158
+        ],
+        "fatal": [
+          159
+        ],
+        "complications": [
+          160
+        ],
+        "must": [
+          161
+        ],
+        "be": [
+          162
+        ],
+        "developed.": [
+          163
+        ]
+      },
+      "relevance_score": 2616.9395,
+      "cited_by_count": 401
+    },
+    {
+      "id": "https://openalex.org/W1516370311",
+      "display_name": "Secondary injury mechanisms in acute spinal cord injury.",
+      "title": "Secondary injury mechanisms in acute spinal cord injury.",
+      "publication_year": 1993,
+      "doi": null,
+      "is_retracted": false,
+      "abstract_inverted_index": {
+        "Experimental": [
+          0
+        ],
+        "studies": [
+          1
+        ],
+        "in": [
+          2,
+          86,
+          101
+        ],
+        "animal": [
+          3,
+          133
+        ],
+        "spinal": [
+          4,
+          17,
+          62
+        ],
+        "cord": [
+          5,
+          63
+        ],
+        "injury": [
+          6,
+          45,
+          64,
+          123
+        ],
+        "models": [
+          7,
+          134
+        ],
+        "suggest": [
+          8
+        ],
+        "that": [
+          9,
+          40,
+          97
+        ],
+        "preservation": [
+          10
+        ],
+        "of": [
+          11,
+          16,
+          61,
+          115
+        ],
+        "a": [
+          12,
+          41
+        ],
+        "relatively": [
+          13
+        ],
+        "small": [
+          14
+        ],
+        "number": [
+          15
+        ],
+        "axons": [
+          18
+        ],
+        "can": [
+          19,
+          46
+        ],
+        "support": [
+          20
+        ],
+        "neurological": [
+          21,
+          48
+        ],
+        "recovery.": [
+          22,
+          49
+        ],
+        "The": [
+          23
+        ],
+        "second": [
+          24
+        ],
+        "National": [
+          25
+        ],
+        "Acute": [
+          26
+        ],
+        "Spinal": [
+          27
+        ],
+        "Cord": [
+          28
+        ],
+        "Injury": [
+          29
+        ],
+        "Study": [
+          30
+        ],
+        "(NASCIS": [
+          31
+        ],
+        "2)": [
+          32
+        ],
+        "was": [
+          33
+        ],
+        "the": [
+          34,
+          81
+        ],
+        "first": [
+          35,
+          82
+        ],
+        "clinical": [
+          36,
+          105
+        ],
+        "trial": [
+          37
+        ],
+        "to": [
+          38,
+          79
+        ],
+        "demonstrate": [
+          39
+        ],
+        "treatment": [
+          42
+        ],
+        "given": [
+          43
+        ],
+        "after": [
+          44
+        ],
+        "enhance": [
+          47
+        ],
+        "In": [
+          50,
+          77
+        ],
+        "this": [
+          51
+        ],
+        "trial,": [
+          52
+        ],
+        "patients": [
+          53
+        ],
+        "treated": [
+          54,
+          74
+        ],
+        "with": [
+          55,
+          75
+        ],
+        "high-dose": [
+          56
+        ],
+        "methylprednisolone": [
+          57
+        ],
+        "within": [
+          58
+        ],
+        "8": [
+          59
+        ],
+        "hours": [
+          60
+        ],
+        "recovered": [
+          65
+        ],
+        "more": [
+          66,
+          131,
+          136
+        ],
+        "sensory": [
+          67
+        ],
+        "and": [
+          68,
+          104,
+          113,
+          122,
+          135
+        ],
+        "motor": [
+          69
+        ],
+        "function": [
+          70
+        ],
+        "than": [
+          71
+        ],
+        "did": [
+          72
+        ],
+        "those": [
+          73
+        ],
+        "placebo.": [
+          76
+        ],
+        "addition": [
+          78
+        ],
+        "demonstrating": [
+          80
+        ],
+        "effective": [
+          83
+        ],
+        "pharmacological": [
+          84
+        ],
+        "intervention": [
+          85
+        ],
+        "central": [
+          87
+        ],
+        "nervous": [
+          88
+        ],
+        "system": [
+          89
+        ],
+        "injury,": [
+          90
+        ],
+        "NASCIS": [
+          91
+        ],
+        "2": [
+          92
+        ],
+        "identified": [
+          93
+        ],
+        "several": [
+          94
+        ],
+        "critical": [
+          95
+        ],
+        "issues": [
+          96,
+          127
+        ],
+        "must": [
+          98
+        ],
+        "be": [
+          99
+        ],
+        "investigated": [
+          100
+        ],
+        "future": [
+          102
+        ],
+        "preclinical": [
+          103
+        ],
+        "research.": [
+          106
+        ],
+        "These": [
+          107
+        ],
+        "include": [
+          108
+        ],
+        "drug": [
+          109
+        ],
+        "dose,": [
+          110
+        ],
+        "initiation": [
+          111
+        ],
+        "time,": [
+          112
+        ],
+        "duration": [
+          114
+        ],
+        "treatment,": [
+          116
+        ],
+        "as": [
+          117,
+          119
+        ],
+        "well": [
+          118
+        ],
+        "combination": [
+          120
+        ],
+        "therapy": [
+          121
+        ],
+        "severity.": [
+          124
+        ],
+        "Addressing": [
+          125
+        ],
+        "these": [
+          126
+        ],
+        "systematically": [
+          128
+        ],
+        "will": [
+          129
+        ],
+        "require": [
+          130
+        ],
+        "reproducible": [
+          132
+        ],
+        "accurate": [
+          137
+        ],
+        "outcome": [
+          138
+        ],
+        "measures.": [
+          139
+        ]
+      },
+      "relevance_score": 2590.3027,
+      "cited_by_count": 250
+    },
+    {
+      "id": "https://openalex.org/W646621015",
+      "display_name": "Spinal Cord Injury: Clinical Outcomes from the Model Systems",
+      "title": "Spinal Cord Injury: Clinical Outcomes from the Model Systems",
+      "publication_year": 1995,
+      "doi": null,
+      "is_retracted": false,
+      "abstract_inverted_index": null,
+      "relevance_score": 2530.62,
+      "cited_by_count": 401
+    }
+  ],
+  "group_by": []
+}

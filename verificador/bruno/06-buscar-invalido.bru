@@ -1,0 +1,22 @@
+meta {
+  name: Busca - lista vazia (422)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/buscar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "buscas": []
+  }
+}
+
+assert {
+  res.status: eq 422
+  res.body.codigo: eq entrada_invalida
+}

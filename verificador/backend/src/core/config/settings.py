@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = None
     database_url: SecretStr = Field(validation_alias="DATABASE_URL")
     openalex_mailto: str | None = None
+    # Chave gratuita da OpenAlex. Opcional, mas sob carga ela derruba busca
+    # "anônima" com 503 — e tráfego só com mailto conta como anônimo.
+    openalex_api_key: SecretStr | None = None
+    # O teto de resultados por busca não mora aqui: quem aplica é
+    # `limitar_quantidade`, em src/services/openalex.py, para que a mesma regra
+    # valha para a configuração e para o parâmetro que o agente passa.
+    openalex_resultados_por_busca: int = Field(default=10, ge=1)
+    openalex_timeout_segundos: float = Field(default=10.0, gt=0)
+    openalex_max_tentativas: int = Field(default=3, ge=1, le=5)
     cors_origins: list[str] = Field(default_factory=lambda: ["*"])
     rate_limit_max_requests: int = 30
     rate_limit_window_seconds: int = 60
@@ -34,7 +43,9 @@ class Settings(BaseSettings):
             raise ValueError("DATABASE_URL não pode estar vazia")
         return value
 
-    @field_validator("openai_api_key", "openalex_mailto", mode="before")
+    @field_validator(
+        "openai_api_key", "openalex_api_key", "openalex_mailto", mode="before"
+    )
     @classmethod
     def optional_blank_as_none(
         cls, value: str | SecretStr | None

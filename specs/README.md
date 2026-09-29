@@ -16,6 +16,7 @@ escrito nela será inventado.
 
 | # | Spec | Status | Branch |
 | :-- | :--- | :--- | :--- |
+| 002 | [Busca de trabalhos na OpenAlex](002-busca-openalex/spec.md) | implementada | `feature/002-busca-openalex` |
 | 006 | [Configuração centralizada do backend](006-configuracao-centralizada/spec.md) | implementada | `feature/006-configuracao-centralizada` |
 | 007 | [Inicialização da API pelo Docker Compose](007-app-fastapi-compose/spec.md) | implementada | `feature/007-app-fastapi-compose` |
 | 008 | [Verificação automática de lint e testes em cada PR](008-ci-lint-e-testes/spec.md) | implementada | `feature/008-ci-ruff-pytest` |

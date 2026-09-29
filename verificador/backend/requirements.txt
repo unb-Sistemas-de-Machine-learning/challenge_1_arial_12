@@ -4,9 +4,10 @@ uvicorn[standard]==0.34.0
 pydantic==2.10.5
 pydantic-settings==2.7.1
 
-# Agentes / LLM
+# LLM
 openai==1.59.7
-mcp==1.2.0
+
+# Cliente HTTP da OpenAlex
 httpx==0.28.1
 
 # Banco de dados

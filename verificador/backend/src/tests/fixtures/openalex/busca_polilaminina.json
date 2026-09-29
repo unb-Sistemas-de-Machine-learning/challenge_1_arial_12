@@ -1,0 +1,1887 @@
+{
+  "meta": {
+    "count": 49,
+    "db_response_time_ms": 69,
+    "page": 1,
+    "per_page": 5,
+    "groups_count": null,
+    "x_query": {
+      "oql": "works where full text has (polylaminin spinal cord injury)",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "fulltext.search",
+            "value": "polylaminin spinal cord injury",
+            "operator": "has"
+          }
+        ]
+      },
+      "url": "/works?filter=fulltext.search:polylaminin spinal cord injury&per_page=5"
+    },
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W2110406916",
+      "display_name": "Polylaminin, a polymeric form of laminin, promotes regeneration after spinal cord injury",
+      "title": "Polylaminin, a polymeric form of laminin, promotes regeneration after spinal cord injury",
+      "publication_year": 2010,
+      "doi": "https://doi.org/10.1096/fj.10-157628",
+      "is_retracted": false,
+      "abstract_inverted_index": {
+        "Regeneration": [
+          0
+        ],
+        "of": [
+          1,
+          10,
+          32,
+          40,
+          50,
+          70,
+          74,
+          116,
+          138,
+          159,
+          174
+        ],
+        "spinal": [
+          2,
+          131
+        ],
+        "cord": [
+          3,
+          132
+        ],
+        "injury": [
+          4
+        ],
+        "(SCI)": [
+          5
+        ],
+        "is": [
+          6,
+          14,
+          193
+        ],
+        "a": [
+          7,
+          47,
+          144,
+          194
+        ],
+        "major": [
+          8
+        ],
+        "topic": [
+          9
+        ],
+        "biomedical": [
+          11
+        ],
+        "research.": [
+          12
+        ],
+        "Laminin": [
+          13
+        ],
+        "an": [
+          15,
+          150
+        ],
+        "extracellular": [
+          16
+        ],
+        "matrix": [
+          17
+        ],
+        "protein": [
+          18,
+          185
+        ],
+        "implicated": [
+          19
+        ],
+        "in": [
+          20,
+          65,
+          111,
+          129,
+          179
+        ],
+        "neural": [
+          21
+        ],
+        "development": [
+          22
+        ],
+        "and": [
+          23,
+          133,
+          140
+        ],
+        "regeneration,": [
+          24
+        ],
+        "but": [
+          25,
+          72
+        ],
+        "despite": [
+          26
+        ],
+        "that,": [
+          27
+        ],
+        "there": [
+          28
+        ],
+        "are": [
+          29
+        ],
+        "no": [
+          30
+        ],
+        "reports": [
+          31
+        ],
+        "exogenous": [
+          33
+        ],
+        "laminin": [
+          34,
+          51
+        ],
+        "contributing": [
+          35
+        ],
+        "to": [
+          36,
+          62,
+          107,
+          198
+        ],
+        "improve": [
+          37
+        ],
+        "the": [
+          38,
+          88,
+          91,
+          124,
+          130,
+          156,
+          166,
+          183
+        ],
+        "outcome": [
+          39
+        ],
+        "experimental": [
+          41
+        ],
+        "SCI.": [
+          42,
+          201
+        ],
+        "Here": [
+          43
+        ],
+        "we": [
+          44
+        ],
+        "investigated": [
+          45
+        ],
+        "whether": [
+          46
+        ],
+        "biomimetic": [
+          48
+        ],
+        "polymer": [
+          49
+        ],
+        "assembled": [
+          52
+        ],
+        "on": [
+          53,
+          163
+        ],
+        "pH": [
+          54
+        ],
+        "acidification,": [
+          55
+        ],
+        "henceforth": [
+          56
+        ],
+        "called": [
+          57
+        ],
+        "polylaminin,": [
+          58,
+          71
+        ],
+        "could": [
+          59
+        ],
+        "be": [
+          60
+        ],
+        "used": [
+          61
+        ],
+        "treat": [
+          63,
+          199
+        ],
+        "SCI": [
+          64
+        ],
+        "rats.": [
+          66
+        ],
+        "Acute": [
+          67
+        ],
+        "local": [
+          68
+        ],
+        "injection": [
+          69
+        ],
+        "not": [
+          73,
+          177
+        ],
+        "nonpolymerized": [
+          75,
+          184
+        ],
+        "laminin,": [
+          76
+        ],
+        "improved": [
+          77
+        ],
+        "motor": [
+          78
+        ],
+        "function": [
+          79
+        ],
+        "after": [
+          80,
+          100,
+          169
+        ],
+        "thoracic": [
+          81
+        ],
+        "compression,": [
+          82
+        ],
+        "partial": [
+          83
+        ],
+        "or": [
+          84,
+          186
+        ],
+        "complete": [
+          85,
+          145
+        ],
+        "transection.": [
+          86,
+          146
+        ],
+        "In": [
+          87
+        ],
+        "latter": [
+          89
+        ],
+        "case,": [
+          90
+        ],
+        "BBB": [
+          92
+        ],
+        "score": [
+          93
+        ],
+        "for": [
+          94
+        ],
+        "open": [
+          95
+        ],
+        "field": [
+          96
+        ],
+        "locomotion": [
+          97,
+          164
+        ],
+        "8": [
+          98
+        ],
+        "wk": [
+          99
+        ],
+        "lesion": [
+          101
+        ],
+        "increased": [
+          102
+        ],
+        "from": [
+          103,
+          123,
+          165
+        ],
+        "4.2": [
+          104
+        ],
+        "±": [
+          105,
+          109
+        ],
+        "0.48": [
+          106
+        ],
+        "8.8": [
+          108
+        ],
+        "1.14": [
+          110
+        ],
+        "animals": [
+          112,
+          180
+        ],
+        "treated": [
+          113,
+          181
+        ],
+        "with": [
+          114,
+          182
+        ],
+        "polylaminin": [
+          115,
+          175,
+          192
+        ],
+        "human": [
+          117,
+          200
+        ],
+        "origin.": [
+          118
+        ],
+        "Accordingly,": [
+          119
+        ],
+        "neurons": [
+          120
+        ],
+        "retrogradely": [
+          121
+        ],
+        "labeled": [
+          122
+        ],
+        "sublesion": [
+          125
+        ],
+        "stump": [
+          126
+        ],
+        "were": [
+          127,
+          176
+        ],
+        "detected": [
+          128
+        ],
+        "brain": [
+          134
+        ],
+        "stem,": [
+          135
+        ],
+        "indicating": [
+          136
+        ],
+        "regrowth": [
+          137
+        ],
+        "short": [
+          139
+        ],
+        "long": [
+          141
+        ],
+        "fibers": [
+          142
+        ],
+        "across": [
+          143
+        ],
+        "Polylaminin": [
+          147
+        ],
+        "also": [
+          148
+        ],
+        "played": [
+          149
+        ],
+        "unsuspected": [
+          151
+        ],
+        "anti-inflammatory": [
+          152
+        ],
+        "role,": [
+          153
+        ],
+        "which": [
+          154
+        ],
+        "underlies": [
+          155
+        ],
+        "early": [
+          157
+        ],
+        "onset": [
+          158
+        ],
+        "its": [
+          160
+        ],
+        "positive": [
+          161
+        ],
+        "effects": [
+          162,
+          173
+        ],
+        "first": [
+          167
+        ],
+        "week": [
+          168
+        ],
+        "treatment.": [
+          170
+        ],
+        "The": [
+          171
+        ],
+        "beneficial": [
+          172
+        ],
+        "observed": [
+          178
+        ],
+        "vehicle": [
+          187
+        ],
+        "only.": [
+          188
+        ],
+        "We": [
+          189
+        ],
+        "propose": [
+          190
+        ],
+        "that": [
+          191
+        ],
+        "promising": [
+          195
+        ],
+        "therapeutic": [
+          196
+        ],
+        "agent": [
+          197
+        ]
+      },
+      "relevance_score": 863.86304,
+      "cited_by_count": 48
+    },
+    {
+      "id": "https://openalex.org/W2793340589",
+      "display_name": "Biomaterials for revascularization and immunomodulation after spinal cord injury",
+      "title": "Biomaterials for revascularization and immunomodulation after spinal cord injury",
+      "publication_year": 2018,
+      "doi": "https://doi.org/10.1088/1748-605x/aaa9d8",
+      "is_retracted": false,
+      "abstract_inverted_index": {
+        "Spinal": [
+          0
+        ],
+        "cord": [
+          1,
+          43,
+          68,
+          131,
+          220
+        ],
+        "injury": [
+          2,
+          59,
+          97
+        ],
+        "(SCI)": [
+          3
+        ],
+        "causes": [
+          4
+        ],
+        "immediate": [
+          5
+        ],
+        "damage": [
+          6,
+          183
+        ],
+        "to": [
+          7,
+          33,
+          81,
+          212
+        ],
+        "the": [
+          8,
+          28,
+          41,
+          58,
+          72,
+          82,
+          96,
+          104,
+          110,
+          116,
+          120,
+          150,
+          173,
+          180,
+          185,
+          194,
+          198,
+          208
+        ],
+        "nervous": [
+          9,
+          25,
+          221
+        ],
+        "tissue": [
+          10,
+          26,
+          74,
+          84,
+          100
+        ],
+        "accompanied": [
+          11
+        ],
+        "by": [
+          12
+        ],
+        "loss": [
+          13,
+          111
+        ],
+        "of": [
+          14,
+          23,
+          40,
+          89,
+          106,
+          112,
+          122,
+          138,
+          152,
+          182,
+          187,
+          210
+        ],
+        "motor": [
+          15
+        ],
+        "and": [
+          16,
+          50,
+          53,
+          61,
+          77,
+          94,
+          102,
+          118,
+          145,
+          149,
+          166,
+          184,
+          203,
+          207,
+          215
+        ],
+        "sensory": [
+          17
+        ],
+        "function.": [
+          18
+        ],
+        "The": [
+          19,
+          38,
+          86
+        ],
+        "limited": [
+          20
+        ],
+        "self-repair": [
+          21
+        ],
+        "competence": [
+          22
+        ],
+        "injured": [
+          24
+        ],
+        "underscores": [
+          27
+        ],
+        "need": [
+          29
+        ],
+        "for": [
+          30,
+          129,
+          164
+        ],
+        "reparative": [
+          31,
+          146,
+          188
+        ],
+        "interventions": [
+          32
+        ],
+        "recover": [
+          34
+        ],
+        "function": [
+          35
+        ],
+        "after": [
+          36,
+          176,
+          196
+        ],
+        "SCI.": [
+          37
+        ],
+        "vasculature": [
+          39,
+          92,
+          195
+        ],
+        "spinal": [
+          42,
+          130,
+          219
+        ],
+        "plays": [
+          44
+        ],
+        "a": [
+          45,
+          65
+        ],
+        "crucial": [
+          46
+        ],
+        "role": [
+          47
+        ],
+        "in": [
+          48,
+          57,
+          71,
+          93,
+          217
+        ],
+        "SCI": [
+          49
+        ],
+        "repair.": [
+          51,
+          132
+        ],
+        "Ruptured": [
+          52
+        ],
+        "sheared": [
+          54
+        ],
+        "blood": [
+          55,
+          62,
+          113,
+          124,
+          154,
+          168,
+          204
+        ],
+        "vessels": [
+          56,
+          63,
+          125,
+          155
+        ],
+        "epicenter": [
+          60
+        ],
+        "with": [
+          64,
+          193
+        ],
+        "breached": [
+          66
+        ],
+        "blood-spinal": [
+          67
+        ],
+        "barrier": [
+          69
+        ],
+        "(BSCB)": [
+          70
+        ],
+        "surrounding": [
+          73
+        ],
+        "cause": [
+          75
+        ],
+        "bleeding": [
+          76
+        ],
+        "inflammation,": [
+          78
+        ],
+        "which": [
+          79,
+          142
+        ],
+        "contribute": [
+          80
+        ],
+        "overall": [
+          83
+        ],
+        "damage.": [
+          85
+        ],
+        "insufficient": [
+          87
+        ],
+        "formation": [
+          88,
+          121,
+          151,
+          170
+        ],
+        "new": [
+          90,
+          123,
+          153
+        ],
+        "functional": [
+          91
+        ],
+        "near": [
+          95
+        ],
+        "impedes": [
+          98
+        ],
+        "endogenous": [
+          99
+        ],
+        "repair": [
+          101,
+          107
+        ],
+        "limits": [
+          103
+        ],
+        "prospect": [
+          105
+        ],
+        "approaches.": [
+          108
+        ],
+        "Limiting": [
+          109
+        ],
+        "vessels,": [
+          114
+        ],
+        "stabilizing": [
+          115
+        ],
+        "BSCB,": [
+          117
+        ],
+        "promoting": [
+          119,
+          165
+        ],
+        "are": [
+          126,
+          156
+        ],
+        "therapeutic": [
+          127
+        ],
+        "targets": [
+          128
+        ],
+        "Inflammation": [
+          133,
+          148
+        ],
+        "is": [
+          134
+        ],
+        "an": [
+          135
+        ],
+        "integral": [
+          136
+        ],
+        "part": [
+          137
+        ],
+        "injury-mediated": [
+          139
+        ],
+        "vascular": [
+          140
+        ],
+        "damage,": [
+          141
+        ],
+        "has": [
+          143
+        ],
+        "deleterious": [
+          144
+        ],
+        "consequences.": [
+          147
+        ],
+        "intricately": [
+          157
+        ],
+        "interwoven.": [
+          158
+        ],
+        "Biomaterials": [
+          159
+        ],
+        "can": [
+          160
+        ],
+        "be": [
+          161
+        ],
+        "effectively": [
+          162
+        ],
+        "used": [
+          163
+        ],
+        "guiding": [
+          167
+        ],
+        "vessel": [
+          169,
+          205
+        ],
+        "or": [
+          171
+        ],
+        "modulating": [
+          172
+        ],
+        "inflammatory": [
+          174
+        ],
+        "response": [
+          175
+        ],
+        "SCI,": [
+          177,
+          197
+        ],
+        "thereby": [
+          178
+        ],
+        "governing": [
+          179
+        ],
+        "extent": [
+          181
+        ],
+        "success": [
+          186
+        ],
+        "interventions.": [
+          189
+        ],
+        "This": [
+          190
+        ],
+        "review": [
+          191
+        ],
+        "deals": [
+          192
+        ],
+        "reciprocal": [
+          199
+        ],
+        "interactions": [
+          200
+        ],
+        "between": [
+          201
+        ],
+        "inflammation": [
+          202
+        ],
+        "formation,": [
+          206
+        ],
+        "potential": [
+          209
+        ],
+        "biomaterials": [
+          211
+        ],
+        "support": [
+          213
+        ],
+        "revascularization": [
+          214
+        ],
+        "immunomodulation": [
+          216
+        ],
+        "damaged": [
+          218
+        ],
+        "tissue.": [
+          222
+        ]
+      },
+      "relevance_score": 275.2992,
+      "cited_by_count": 78
+    },
+    {
+      "id": "https://openalex.org/W4405364713",
+      "display_name": "RETURN OF VOLUNTARY MOTOR CONTRACTION AFTER COMPLETE SPINAL CORD INJURY: A PILOT HUMAN STUDY ON POLYLAMININ",
+      "title": "RETURN OF VOLUNTARY MOTOR CONTRACTION AFTER COMPLETE SPINAL CORD INJURY: A PILOT HUMAN STUDY ON POLYLAMININ",
+      "publication_year": 2024,
+      "doi": "https://doi.org/10.1101/2024.02.19.24301010",
+      "is_retracted": false,
+      "abstract_inverted_index": {
+        "ABSTRACT": [
+          0
+        ],
+        "Spinal": [
+          1,
+          144
+        ],
+        "cord": [
+          2
+        ],
+        "injury": [
+          3
+        ],
+        "(SCI)": [
+          4
+        ],
+        "is": [
+          5,
+          14,
+          170
+        ],
+        "still": [
+          6
+        ],
+        "a": [
+          7,
+          15,
+          20,
+          42,
+          51,
+          95,
+          190
+        ],
+        "major": [
+          8
+        ],
+        "challenge": [
+          9
+        ],
+        "for": [
+          10,
+          140
+        ],
+        "translational": [
+          11
+        ],
+        "medicine.": [
+          12
+        ],
+        "Polylaminin": [
+          13
+        ],
+        "stabilized": [
+          16
+        ],
+        "form": [
+          17
+        ],
+        "of": [
+          18,
+          41,
+          50,
+          56,
+          85,
+          99,
+          115,
+          121,
+          143,
+          166,
+          180
+        ],
+        "laminin,": [
+          19
+        ],
+        "natural": [
+          21
+        ],
+        "multifunctional": [
+          22
+        ],
+        "protein,": [
+          23
+        ],
+        "previously": [
+          24
+        ],
+        "shown": [
+          25
+        ],
+        "to": [
+          26,
+          58,
+          71,
+          118,
+          129,
+          182,
+          193,
+          197
+        ],
+        "promote": [
+          27
+        ],
+        "neuroprotection": [
+          28
+        ],
+        "and": [
+          29,
+          49,
+          148,
+          150
+        ],
+        "axonal": [
+          30
+        ],
+        "growth": [
+          31
+        ],
+        "after": [
+          32,
+          102
+        ],
+        "SCI": [
+          33
+        ],
+        "in": [
+          34,
+          47,
+          53
+        ],
+        "rodents.": [
+          35
+        ],
+        "Here": [
+          36
+        ],
+        "we": [
+          37
+        ],
+        "present": [
+          38
+        ],
+        "the": [
+          39,
+          112,
+          119,
+          122,
+          131,
+          137,
+          156,
+          164,
+          167,
+          178
+        ],
+        "results": [
+          40
+        ],
+        "confirmatory": [
+          43
+        ],
+        "preclinical": [
+          44
+        ],
+        "study": [
+          45,
+          69,
+          176
+        ],
+        "performed": [
+          46
+        ],
+        "rats": [
+          48
+        ],
+        "first": [
+          52,
+          113
+        ],
+        "human": [
+          54
+        ],
+        "trial": [
+          55
+        ],
+        "polylaminin": [
+          57,
+          100,
+          181
+        ],
+        "treat": [
+          59,
+          183
+        ],
+        "acute": [
+          60,
+          184
+        ],
+        "SCI.": [
+          61
+        ],
+        "The": [
+          62,
+          124
+        ],
+        "latter": [
+          63
+        ],
+        "was": [
+          64
+        ],
+        "an": [
+          65,
+          171
+        ],
+        "open-label,": [
+          66
+        ],
+        "single-armed": [
+          67
+        ],
+        "academic": [
+          68
+        ],
+        "designed": [
+          70
+        ],
+        "include": [
+          72
+        ],
+        "only": [
+          73
+        ],
+        "patients": [
+          74,
+          87,
+          126,
+          158
+        ],
+        "diagnosed": [
+          75
+        ],
+        "with": [
+          76
+        ],
+        "functional": [
+          77
+        ],
+        "complete": [
+          78
+        ],
+        "SCI,": [
+          79,
+          185
+        ],
+        "because": [
+          80
+        ],
+        "no": [
+          81
+        ],
+        "more": [
+          82
+        ],
+        "than": [
+          83
+        ],
+        "15%": [
+          84
+        ],
+        "these": [
+          86
+        ],
+        "recover": [
+          88
+        ],
+        "motor": [
+          89,
+          149,
+          161,
+          195
+        ],
+        "function": [
+          90,
+          196
+        ],
+        "spontaneously.": [
+          91
+        ],
+        "Eight": [
+          92
+        ],
+        "participants": [
+          93
+        ],
+        "received": [
+          94
+        ],
+        "single": [
+          96
+        ],
+        "intraspinal": [
+          97
+        ],
+        "injection": [
+          98
+        ],
+        "shortly": [
+          101
+        ],
+        "trauma": [
+          103
+        ],
+        "(average": [
+          104
+        ],
+        "time": [
+          105
+        ],
+        "=": [
+          106
+        ],
+        "2.3": [
+          107
+        ],
+        "days).": [
+          108
+        ],
+        "Two": [
+          109
+        ],
+        "died": [
+          110
+        ],
+        "within": [
+          111
+        ],
+        "days": [
+          114
+        ],
+        "causes": [
+          116
+        ],
+        "related": [
+          117
+        ],
+        "gravity": [
+          120
+        ],
+        "condition.": [
+          123
+        ],
+        "six": [
+          125,
+          157
+        ],
+        "that": [
+          127
+        ],
+        "survived": [
+          128
+        ],
+        "reach": [
+          130
+        ],
+        "one-month": [
+          132
+        ],
+        "follow-up": [
+          133
+        ],
+        "were": [
+          134
+        ],
+        "evaluated": [
+          135
+        ],
+        "using": [
+          136
+        ],
+        "International": [
+          138
+        ],
+        "Standards": [
+          139
+        ],
+        "Neurological": [
+          141
+        ],
+        "Classification": [
+          142
+        ],
+        "Cord": [
+          145
+        ],
+        "Injury": [
+          146
+        ],
+        "(6/6)": [
+          147
+        ],
+        "somatosensory": [
+          151
+        ],
+        "evoked": [
+          152
+        ],
+        "potentials": [
+          153
+        ],
+        "(3/6).": [
+          154
+        ],
+        "All": [
+          155
+        ],
+        "regained": [
+          159
+        ],
+        "voluntary": [
+          160
+        ],
+        "control": [
+          162
+        ],
+        "below": [
+          163
+        ],
+        "level": [
+          165
+        ],
+        "lesion,": [
+          168
+        ],
+        "which": [
+          169
+        ],
+        "unprecedented": [
+          172
+        ],
+        "recovery.": [
+          173
+        ],
+        "This": [
+          174
+        ],
+        "preliminary": [
+          175
+        ],
+        "suggests": [
+          177
+        ],
+        "efficacy": [
+          179
+        ],
+        "revealing": [
+          186
+        ],
+        "its": [
+          187
+        ],
+        "potential": [
+          188
+        ],
+        "as": [
+          189
+        ],
+        "new": [
+          191
+        ],
+        "therapy": [
+          192
+        ],
+        "restore": [
+          194
+        ],
+        "paralyzed": [
+          198
+        ],
+        "people": [
+          199
+        ],
+        "(UTN:": [
+          200
+        ],
+        "U1111-1144-5390).": [
+          201
+        ]
+      },
+      "relevance_score": 266.01587,
+      "cited_by_count": 3
+    },
+    {
+      "id": "https://openalex.org/W1990616239",
+      "display_name": "Biomaterials for spinal cord repair",
+      "title": "Biomaterials for spinal cord repair",
+      "publication_year": 2013,
+      "doi": "https://doi.org/10.1007/s12264-013-1362-7",
+      "is_retracted": false,
+      "abstract_inverted_index": null,
+      "relevance_score": 265.33255,
+      "cited_by_count": 85
+    },
+    {
+      "id": "https://openalex.org/W4391006047",
+      "display_name": "Biomaterial-based regenerative therapeutic strategies for spinal cord injury",
+      "title": "Biomaterial-based regenerative therapeutic strategies for spinal cord injury",
+      "publication_year": 2024,
+      "doi": "https://doi.org/10.1038/s41427-023-00526-4",
+      "is_retracted": false,
+      "abstract_inverted_index": {
+        "Abstract": [
+          0
+        ],
+        "As": [
+          1
+        ],
+        "one": [
+          2
+        ],
+        "of": [
+          3,
+          51,
+          57,
+          107,
+          139
+        ],
+        "the": [
+          4,
+          24,
+          40,
+          48,
+          55,
+          105,
+          136
+        ],
+        "most": [
+          5
+        ],
+        "intractable": [
+          6
+        ],
+        "neurological": [
+          7,
+          17
+        ],
+        "diseases,": [
+          8
+        ],
+        "spinal": [
+          9,
+          42,
+          140
+        ],
+        "cord": [
+          10,
+          141
+        ],
+        "injury": [
+          11
+        ],
+        "(SCI)": [
+          12
+        ],
+        "often": [
+          13
+        ],
+        "leads": [
+          14
+        ],
+        "to": [
+          15,
+          23,
+          37,
+          111,
+          128
+        ],
+        "permanent": [
+          16
+        ],
+        "impairment": [
+          18
+        ],
+        "in": [
+          19,
+          85
+        ],
+        "patients.": [
+          20
+        ],
+        "Unfortunately,": [
+          21
+        ],
+        "due": [
+          22
+        ],
+        "complex": [
+          25
+        ],
+        "pathological": [
+          26
+        ],
+        "mechanisms": [
+          27
+        ],
+        "and": [
+          28,
+          59,
+          79,
+          82,
+          115,
+          132
+        ],
+        "unique": [
+          29
+        ],
+        "postinjury": [
+          30
+        ],
+        "microenvironment,": [
+          31
+        ],
+        "there": [
+          32
+        ],
+        "is": [
+          33
+        ],
+        "currently": [
+          34
+        ],
+        "no": [
+          35
+        ],
+        "way": [
+          36
+        ],
+        "completely": [
+          38
+        ],
+        "repair": [
+          39
+        ],
+        "injured": [
+          41
+        ],
+        "cord.": [
+          43
+        ],
+        "In": [
+          44,
+          88
+        ],
+        "recent": [
+          45
+        ],
+        "years,": [
+          46
+        ],
+        "with": [
+          47
+        ],
+        "rapid": [
+          49
+        ],
+        "development": [
+          50
+        ],
+        "tissue": [
+          52,
+          97
+        ],
+        "engineering": [
+          53
+        ],
+        "technology,": [
+          54
+        ],
+        "combination": [
+          56
+        ],
+        "biomaterials": [
+          58
+        ],
+        "medicine": [
+          60
+        ],
+        "has": [
+          61
+        ],
+        "provided": [
+          62
+        ],
+        "a": [
+          63,
+          130
+        ],
+        "new": [
+          64,
+          133
+        ],
+        "idea": [
+          65
+        ],
+        "for": [
+          66,
+          96,
+          104,
+          135
+        ],
+        "treating": [
+          67
+        ],
+        "SCI.": [
+          68
+        ],
+        "Here,": [
+          69
+        ],
+        "we": [
+          70,
+          90,
+          100,
+          119
+        ],
+        "systematically": [
+          71
+        ],
+        "summarize": [
+          72
+        ],
+        "representative": [
+          73
+        ],
+        "biomaterials,": [
+          74
+        ],
+        "including": [
+          75
+        ],
+        "natural,": [
+          76
+        ],
+        "synthetic,": [
+          77
+        ],
+        "nano,": [
+          78
+        ],
+        "hybrid": [
+          80
+        ],
+        "materials,": [
+          81
+        ],
+        "their": [
+          83
+        ],
+        "applications": [
+          84
+        ],
+        "SCI": [
+          86
+        ],
+        "treatment.": [
+          87
+        ],
+        "addition,": [
+          89
+        ],
+        "describe": [
+          91
+        ],
+        "several": [
+          92,
+          121
+        ],
+        "state-of-the-art": [
+          93
+        ],
+        "fabrication": [
+          94
+        ],
+        "techniques": [
+          95
+        ],
+        "engineering.": [
+          98
+        ],
+        "Importantly,": [
+          99
+        ],
+        "provide": [
+          101,
+          129
+        ],
+        "novel": [
+          102
+        ],
+        "insights": [
+          103,
+          134
+        ],
+        "use": [
+          106
+        ],
+        "biomaterial-based": [
+          108
+        ],
+        "therapeutic": [
+          109
+        ],
+        "strategies": [
+          110
+        ],
+        "reduce": [
+          112
+        ],
+        "secondary": [
+          113
+        ],
+        "damage": [
+          114
+        ],
+        "promote": [
+          116
+        ],
+        "repair.": [
+          117
+        ],
+        "Finally,": [
+          118
+        ],
+        "discuss": [
+          120
+        ],
+        "biomaterial": [
+          122
+        ],
+        "clinical": [
+          123
+        ],
+        "studies.": [
+          124
+        ],
+        "This": [
+          125
+        ],
+        "review": [
+          126
+        ],
+        "aims": [
+          127
+        ],
+        "reference": [
+          131
+        ],
+        "future": [
+          137
+        ],
+        "exploration": [
+          138
+        ],
+        "regeneration": [
+          142
+        ],
+        "strategies.": [
+          143
+        ]
+      },
+      "relevance_score": 259.72934,
+      "cited_by_count": 77
+    }
+  ],
+  "group_by": []
+}

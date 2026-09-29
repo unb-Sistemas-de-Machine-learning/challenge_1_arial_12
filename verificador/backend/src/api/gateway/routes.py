@@ -1,12 +1,22 @@
-"""Rotas públicas do contrato de verificação."""
+"""Rotas públicas: verificação, busca de trabalhos e saúde."""
 
 import logging
 from fastapi import APIRouter, Body, BackgroundTasks, Request
 
-from src.api.schemas.erro import Erro
-from src.api.schemas.verificacao import Estado, Estudo, Pedido, Veredito
+from src.api.gateway.middlewares import ErroGateway
+from src.api.schemas.busca import PedidoDeBusca, RespostaDaBusca
+from src.api.schemas.erro import CodigoErro, Erro
 from src.api.schemas.feedback import FeedbackRequest, FeedbackResponse
 from src.core.database.repositories import registrar_feedback
+from src.api.schemas.verificacao import Estado, Estudo, Pedido, Veredito
+from src.services.openalex import (
+    ErroOpenAlex,
+    OpenAlexRecusouABusca,
+    cliente_compartilhado,
+)
+
+logger = logging.getLogger("verificador.gateway")
+
 
 router = APIRouter()
 
@@ -65,6 +75,77 @@ def verificar(
     print(f"[verificar] url={pedido.url}")
     print(f"[verificar] trecho={pedido.trecho!r}")
     return _VEREDITO_FIXO.model_copy(deep=True)
+
+
+@router.post(
+    "/buscar",
+    response_model=RespostaDaBusca,
+    tags=["busca"],
+    summary="Busca trabalhos científicos na OpenAlex",
+    responses={
+        422: {"model": Erro, "description": "Lista inválida ou recusada pela OpenAlex"},
+        503: {"model": Erro, "description": "OpenAlex indisponível"},
+    },
+)
+async def buscar(
+    pedido: PedidoDeBusca = Body(
+        openapi_examples={
+            "variacoes": {
+                "summary": "Variações da mesma pergunta",
+                "value": {
+                    "buscas": [
+                        "polylaminin spinal cord injury",
+                        "polylaminin regeneration",
+                    ]
+                },
+            },
+            "booleana": {
+                "summary": "Consulta booleana com parênteses",
+                "value": {
+                    "buscas": ['("Service Design" OR "UX") AND ("ITSM" OR "ITIL")'],
+                    "limite": 5,
+                },
+            },
+            "mais_citados": {
+                "summary": "Os mais citados, em vez dos mais relevantes",
+                "value": {
+                    "buscas": ["polylaminin spinal cord injury"],
+                    "ordenar_por": "citacoes",
+                },
+            },
+        }
+    ),
+) -> RespostaDaBusca:
+    """Devolve os trabalhos mais relevantes que a OpenAlex associa às buscas."""
+    # Montar o cliente e usá-lo falham por motivos diferentes, e a resposta
+    # precisa dizer de quem é a culpa. Config faltando é problema do servidor:
+    # responder 422 mandaria quem chamou revisar uma busca que estava certa.
+    try:
+        cliente = cliente_compartilhado()
+    except ValueError as erro:
+        logger.error("Busca indisponível por configuração: %s", erro)
+        raise ErroGateway(CodigoErro.OPENALEX_INDISPONIVEL) from erro
+
+    try:
+        resultado = await cliente.buscar_varias(
+            pedido.buscas,
+            quantidade=pedido.quantidade,
+            limite=pedido.limite,
+            ordenar_por=pedido.ordenar_por,
+        )
+    except OpenAlexRecusouABusca as erro:
+        # A consulta é que está errada, e quem a escreveu foi quem chamou.
+        logger.warning("OpenAlex recusou a busca: %s", erro)
+        raise ErroGateway(CodigoErro.ENTRADA_INVALIDA) from erro
+    except ValueError as erro:
+        # Lista sem nenhuma busca útil: aí sim a culpa é da entrada.
+        logger.warning("Lista de buscas recusada: %s", erro)
+        raise ErroGateway(CodigoErro.ENTRADA_INVALIDA) from erro
+    except ErroOpenAlex as erro:
+        logger.warning("OpenAlex indisponível: %s", erro)
+        raise ErroGateway(CodigoErro.OPENALEX_INDISPONIVEL) from erro
+
+    return RespostaDaBusca.model_validate(resultado.como_dicionario())
 
 
 async def persistir_feedback(fabrica_de_sessoes, veredicto_id: int, util: bool):

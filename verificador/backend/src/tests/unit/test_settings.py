@@ -12,6 +12,10 @@ ENV_KEYS = (
     "OPENAI_API_KEY",
     "DATABASE_URL",
     "OPENALEX_MAILTO",
+    "OPENALEX_API_KEY",
+    "OPENALEX_RESULTADOS_POR_BUSCA",
+    "OPENALEX_TIMEOUT_SEGUNDOS",
+    "OPENALEX_MAX_TENTATIVAS",
     "CORS_ORIGINS",
 )
 
@@ -40,6 +44,55 @@ def test_configuracao_valida_sem_arquivo_env() -> None:
     assert settings.database_url.get_secret_value().endswith("/verificador")
     assert settings.openalex_mailto == "contato@example.com"
     assert settings.cors_origins == ["https://example.com"]
+
+
+def test_chave_da_openalex_e_segredo_e_some_do_repr() -> None:
+    chave = "oa-chave-super-secreta"
+    settings = Settings(
+        _env_file=None,
+        database_url="postgresql+asyncpg://db/v",
+        openalex_api_key=chave,
+    )
+    assert settings.openalex_api_key.get_secret_value() == chave
+    assert chave not in repr(settings)
+
+    vazia = Settings(
+        _env_file=None, database_url="postgresql+asyncpg://db/v", openalex_api_key="  "
+    )
+    assert vazia.openalex_api_key is None
+
+
+def test_ajustes_da_openalex_tem_padrao_e_faixa() -> None:
+    padrao = Settings(_env_file=None, database_url="postgresql+asyncpg://db/v")
+    assert padrao.openalex_resultados_por_busca == 10
+    assert padrao.openalex_timeout_segundos == 10.0
+    assert padrao.openalex_max_tentativas == 3
+
+    ajustado = Settings(
+        _env_file=None,
+        database_url="postgresql+asyncpg://db/v",
+        openalex_resultados_por_busca="25",
+        openalex_timeout_segundos="3.5",
+        openalex_max_tentativas="1",
+    )
+    assert ajustado.openalex_resultados_por_busca == 25
+    assert ajustado.openalex_timeout_segundos == 3.5
+    assert ajustado.openalex_max_tentativas == 1
+
+
+@pytest.mark.parametrize(
+    "invalido",
+    [
+        {"openalex_resultados_por_busca": 0},
+        {"openalex_timeout_segundos": 0},
+        {"openalex_max_tentativas": 0},
+        {"openalex_max_tentativas": 6},
+    ],
+)
+def test_ajustes_da_openalex_fora_da_faixa_falham(invalido: dict) -> None:
+    """Zero tentativa ou timeout zero derrubaria toda busca, em silêncio."""
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, database_url="postgresql+asyncpg://db/v", **invalido)
 
 
 @pytest.mark.parametrize("database_url", [None, "", "   "])

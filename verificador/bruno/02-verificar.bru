@@ -1,0 +1,28 @@
+meta {
+  name: Verificar (veredito mock)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/verificar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "trecho": "A polilaminina regenera a medula espinhal",
+    "url": "https://exemplo.com/noticia"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.estado: isDefined
+}
+
+docs {
+  Devolve o veredito fixo da spec 010. A busca na OpenAlex ainda nao esta
+  ligada nesta rota.
+}
