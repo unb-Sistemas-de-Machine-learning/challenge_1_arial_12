@@ -147,6 +147,7 @@ async def buscar(
 
     return RespostaDaBusca.model_validate(resultado.como_dicionario())
 
+
 async def persistir_feedback(fabrica_de_sessoes, veredicto_id: int, util: bool):
     try:
         async with fabrica_de_sessoes() as sessao:
@@ -176,4 +177,3 @@ async def receber_feedback(
         persistir_feedback, fabrica, pedido.veredicto_id, pedido.util
     )
     return FeedbackResponse(status="recebido")
-
