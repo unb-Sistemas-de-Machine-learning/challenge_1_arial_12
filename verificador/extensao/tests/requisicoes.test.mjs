@@ -19,7 +19,7 @@ test("cancelamento aborta o fetch e retorna código cancelada", async () => {
       sinal.addEventListener("abort", () => reject(new DOMException("Abortada", "AbortError")));
     });
   };
-  const cliente = criarRequisicoes("https://api.example/verificar", buscar);
+  const cliente = criarRequisicoes({ verificar: "https://api.example/verificar", feedback: "https://api.example/feedback" }, buscar);
   cliente.verificar(pedido, (resposta) => respostas.push(resposta));
   cliente.cancelar({ tipo: "cancelar", id: pedido.id });
   await new Promise(setImmediate);
@@ -29,7 +29,7 @@ test("cancelamento aborta o fetch e retorna código cancelada", async () => {
 
 test("erro HTTP preserva só o código conhecido, sem expor detalhe cru", async () => {
   const respostas = [];
-  const cliente = criarRequisicoes("https://api.example/verificar", async () => ({
+  const cliente = criarRequisicoes({ verificar: "https://api.example/verificar", feedback: "https://api.example/feedback" }, async () => ({
     ok: false,
     status: 429,
     headers: new Headers({ "X-Correlation-ID": "id-servidor" }),
@@ -38,4 +38,20 @@ test("erro HTTP preserva só o código conhecido, sem expor detalhe cru", async 
   cliente.verificar(pedido, (resposta) => respostas.push(resposta));
   await new Promise(setImmediate);
   assert.deepEqual(respostas, [{ ok: false, codigo: "limite_excedido" }]);
+});
+
+test("enviarFeedback faz POST em fire-and-forget", async () => {
+  let urlChamada, corpoChamado;
+  const buscar = async (url, opcoes) => {
+    urlChamada = url;
+    corpoChamado = JSON.parse(opcoes.body);
+    return { ok: true };
+  };
+  const cliente = criarRequisicoes({ verificar: "...", feedback: "https://api.example/feedback" }, buscar);
+  cliente.enviarFeedback(123, true);
+  await new Promise(setImmediate);
+  assert.equal(urlChamada, "https://api.example/feedback");
+  assert.equal(corpoChamado.veredicto_id, 123);
+  assert.equal(corpoChamado.util, true);
+  assert.ok(typeof corpoChamado.data_hora === "string");
 });

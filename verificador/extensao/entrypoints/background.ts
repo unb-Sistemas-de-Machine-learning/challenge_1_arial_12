@@ -4,11 +4,14 @@ import type { PedidoCancelar, PedidoVerificar, RespostaVerificar } from "../tipo
 import { ROTAS, urlDaRota } from "../config";
 import { criarRequisicoes } from "../requisicoes";
 
-const ENDPOINT = urlDaRota(ROTAS.verificar);
+const ENDPOINTS = {
+  verificar: urlDaRota(ROTAS.verificar),
+  feedback: urlDaRota(ROTAS.feedback),
+};
 
 export default defineBackground(() => {
-  console.log("[verificador] background pronto —", ENDPOINT);
-  const requisicoes = criarRequisicoes(ENDPOINT, fetch, (status, correlacao) => {
+  console.log("[verificador] background pronto —", ENDPOINTS.verificar);
+  const requisicoes = criarRequisicoes(ENDPOINTS, fetch, (status, correlacao) => {
     console.warn("[verificador] erro HTTP:", status, "correlation_id:", correlacao);
   });
 
@@ -22,6 +25,13 @@ export default defineBackground(() => {
       if (msg.tipo === "cancelar") {
         const pedido = msg as PedidoCancelar;
         if (typeof pedido.id === "string") requisicoes.cancelar(pedido);
+        return;
+      }
+      if (msg.tipo === "feedback") {
+        const pedido = msg as any; // Usar any ou criar interface
+        if (typeof pedido.veredicto_id === "number" && typeof pedido.util === "boolean") {
+          requisicoes.enviarFeedback(pedido.veredicto_id, pedido.util);
+        }
         return;
       }
       if (msg.tipo !== "verificar") return;

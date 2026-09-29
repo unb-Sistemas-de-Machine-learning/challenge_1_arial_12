@@ -14,3 +14,8 @@ testpaths = ["src/tests"]
 # e coletado e ignorado em silencio, e a suite fica verde sem ter rodado nada.
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.pyright]
+executionEnvironments = [
+  { root = "." }
+]

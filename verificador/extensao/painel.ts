@@ -85,11 +85,22 @@ export function htmlVeredito(veredito: Veredito, trecho: string): string {
         .join("")}</div>`
     : "";
 
+  const controlesFeedback = veredito.id != null
+    ? `<div class="vc-feedback" data-veredicto-id="${veredito.id}">
+         <p>Este resultado foi útil?</p>
+         <div class="vc-feedback-botoes">
+           <button type="button" class="vc-feedback-btn vc-feedback-sim" data-util="true">Sim</button>
+           <button type="button" class="vc-feedback-btn vc-feedback-nao" data-util="false">Não</button>
+         </div>
+       </div>`
+    : "";
+
   return (
     cabecalho(rotulo, classe) +
     recorte(trecho) +
     `<p class="vc-just">${esc(veredito.justificativa)}</p>` +
     fonte +
-    termos
+    termos +
+    controlesFeedback
   );
 }

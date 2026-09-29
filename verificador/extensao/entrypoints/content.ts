@@ -90,6 +90,19 @@ export default defineContentScript({
         painel.hidden = true;
       } else if (alvo.closest(".vc-repetir")) {
         controle.repetir();
+      } else if (alvo.closest(".vc-feedback-btn")) {
+        const btn = alvo.closest(".vc-feedback-btn") as HTMLButtonElement;
+        const feedbackDiv = btn.closest(".vc-feedback") as HTMLDivElement;
+        const veredictoId = Number(feedbackDiv.dataset.veredictoId);
+        const util = btn.dataset.util === "true";
+        
+        void browser.runtime.sendMessage({
+          tipo: "feedback",
+          veredicto_id: veredictoId,
+          util: util
+        });
+
+        feedbackDiv.innerHTML = '<p class="vc-feedback-agradecimento">Obrigado pelo feedback!</p>';
       }
     });
   },
@@ -156,6 +169,21 @@ function estilos(): HTMLStyleElement {
     .vc-termos span {
       background: #ededed; border-radius: 999px; padding: 2px 8px; font-size: 11px;
     }
+    .vc-feedback {
+      margin-top: 12px; padding-top: 10px; border-top: 1px solid #e0e0e0;
+      display: flex; flex-direction: column; gap: 8px; align-items: center;
+    }
+    .vc-feedback p { margin: 0; font-size: 12px; color: #565656; }
+    .vc-feedback-botoes { display: flex; gap: 8px; }
+    .vc-feedback-btn {
+      border: 1px solid #d9d9d9; background: #fff; border-radius: 4px;
+      padding: 4px 12px; cursor: pointer; font-size: 12px; font-weight: 500;
+      transition: all 0.2s; color: #1d1d1d;
+    }
+    .vc-feedback-btn:hover { background: #f5f5f5; border-color: #828282; }
+    .vc-feedback-sim:hover { background: #e8f5e9; border-color: #27ae60; color: #27ae60; }
+    .vc-feedback-nao:hover { background: #ffebee; border-color: #eb5757; color: #eb5757; }
+    .vc-feedback-agradecimento { font-weight: 600; color: #27ae60 !important; }
   `;
   return estilo;
 }

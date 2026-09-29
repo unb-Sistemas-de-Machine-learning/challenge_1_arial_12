@@ -77,6 +77,7 @@ def test_campos_dos_modelos_correspondem_ao_typescript() -> None:
         "retratado": "boolean",
     }
     assert _interface_fields(source, "Veredito") == {
+        "id": "number | null",
         "estado": "Estado",
         "estudo": "Estudo | null",
         "termos": "string[]",
@@ -85,7 +86,11 @@ def test_campos_dos_modelos_correspondem_ao_typescript() -> None:
     assert set(Estudo.model_fields) == set(_interface_fields(source, "Estudo"))
     assert set(Veredito.model_fields) == set(_interface_fields(source, "Veredito"))
     assert all(field.is_required() for field in Estudo.model_fields.values())
-    assert all(field.is_required() for field in Veredito.model_fields.values())
+    assert all(
+        field.is_required()
+        for name, field in Veredito.model_fields.items()
+        if name != "id"
+    )
 
 
 def test_valores_de_estado_correspondem_ao_typescript() -> None:
