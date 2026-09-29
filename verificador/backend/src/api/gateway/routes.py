@@ -1,8 +1,6 @@
 """Rotas públicas: verificação, busca de trabalhos e saúde."""
 
 import logging
-
-import logging
 from fastapi import APIRouter, Body, BackgroundTasks, Request
 
 from src.api.gateway.middlewares import ErroGateway
