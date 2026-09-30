@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -19,7 +20,17 @@ class Settings(BaseSettings):
     )
 
     app_debug: bool = False
-    openai_api_key: SecretStr | None = None
+    # Só camada gratuita: Groq ou Gemini, ambos pela API compatível com a
+    # OpenAI. Endereço e modelo padrão de cada um ficam em src/services/llm.py.
+    llm_provedor: Literal["groq", "gemini"] = "groq"
+    llm_api_key: SecretStr | None = None
+    # Vazio usa o modelo padrão do provedor.
+    llm_modelo: str | None = None
+    # Tempo total da chamada, tentativas incluídas: é quanto o leitor espera.
+    llm_timeout_segundos: float = Field(default=15.0, gt=0)
+    llm_max_tentativas: int = Field(default=2, ge=1, le=5)
+    # `json_object` para modelos que não aceitam saída estruturada.
+    llm_formato_json: Literal["json_schema", "json_object"] = "json_schema"
     database_url: SecretStr = Field(validation_alias="DATABASE_URL")
     openalex_mailto: str | None = None
     # Chave gratuita da OpenAlex. Opcional, mas sob carga ela derruba busca
@@ -44,7 +55,11 @@ class Settings(BaseSettings):
         return value
 
     @field_validator(
-        "openai_api_key", "openalex_api_key", "openalex_mailto", mode="before"
+        "llm_api_key",
+        "llm_modelo",
+        "openalex_api_key",
+        "openalex_mailto",
+        mode="before",
     )
     @classmethod
     def optional_blank_as_none(
