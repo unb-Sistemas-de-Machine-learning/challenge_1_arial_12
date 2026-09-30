@@ -44,7 +44,7 @@ def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(
     custom = Settings(
         _env_file=None,
         database_url=database_url,
-        openai_api_key=api_key,
+        llm_api_key=api_key,
         app_debug=True,
         cors_origins=["https://permitida.example"],
     )

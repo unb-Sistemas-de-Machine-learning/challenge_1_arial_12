@@ -9,7 +9,12 @@ from src.core.config.settings import BACKEND_DIR, Settings, get_settings
 
 ENV_KEYS = (
     "APP_DEBUG",
-    "OPENAI_API_KEY",
+    "LLM_PROVEDOR",
+    "LLM_API_KEY",
+    "LLM_MODELO",
+    "LLM_TIMEOUT_SEGUNDOS",
+    "LLM_MAX_TENTATIVAS",
+    "LLM_FORMATO_JSON",
     "DATABASE_URL",
     "OPENALEX_MAILTO",
     "OPENALEX_API_KEY",
@@ -33,14 +38,14 @@ def test_configuracao_valida_sem_arquivo_env() -> None:
     settings = Settings(
         _env_file=None,
         app_debug="true",
-        openai_api_key="sk-exemplo",
+        llm_api_key="sk-exemplo",
         database_url="postgresql+asyncpg://usuario:senha@db:5432/verificador",
         openalex_mailto="contato@example.com",
         cors_origins=["https://example.com"],
     )
 
     assert settings.app_debug is True
-    assert settings.openai_api_key.get_secret_value() == "sk-exemplo"
+    assert settings.llm_api_key.get_secret_value() == "sk-exemplo"
     assert settings.database_url.get_secret_value().endswith("/verificador")
     assert settings.openalex_mailto == "contato@example.com"
     assert settings.cors_origins == ["https://example.com"]
@@ -106,11 +111,11 @@ def test_chaves_opcionais_vazias_e_cors_padrao() -> None:
     settings = Settings(
         _env_file=None,
         database_url="postgresql+asyncpg://db/verificador",
-        openai_api_key="",
+        llm_api_key="",
         openalex_mailto=" ",
     )
     assert settings.app_debug is False
-    assert settings.openai_api_key is None
+    assert settings.llm_api_key is None
     assert settings.openalex_mailto is None
     assert settings.cors_origins == ["*"]
 
@@ -118,7 +123,7 @@ def test_chaves_opcionais_vazias_e_cors_padrao() -> None:
 def test_segredos_nao_aparecem_em_repr_ou_erro() -> None:
     key = "sk-valor-super-secreto"
     database_url = "postgresql+asyncpg://usuario:senha-super-secreta@db/verificador"
-    settings = Settings(_env_file=None, openai_api_key=key, database_url=database_url)
+    settings = Settings(_env_file=None, llm_api_key=key, database_url=database_url)
     assert key not in repr(settings)
     assert database_url not in repr(settings)
     assert "senha-super-secreta" not in repr(settings)
@@ -126,7 +131,7 @@ def test_segredos_nao_aparecem_em_repr_ou_erro() -> None:
     with pytest.raises(ValidationError) as error:
         Settings(
             _env_file=None,
-            openai_api_key=key,
+            llm_api_key=key,
             database_url=database_url,
             app_debug="invalido",
         )

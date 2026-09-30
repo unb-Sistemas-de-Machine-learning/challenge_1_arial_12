@@ -19,7 +19,7 @@ def api(monkeypatch):
     custom = Settings(
         _env_file=None,
         database_url="postgresql+asyncpg://usuario:segredo@host-inexistente/teste",
-        openai_api_key="sk-chave-de-teste",
+        llm_api_key="sk-chave-de-teste",
         app_debug=True,
         cors_origins=["https://permitida.example"],
     )

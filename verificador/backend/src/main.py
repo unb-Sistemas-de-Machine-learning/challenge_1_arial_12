@@ -17,6 +17,7 @@ from src.api.gateway.middlewares import (
 )
 from src.core.config import settings as settings_module
 from src.core.database.session import criar_fabrica_de_sessoes, criar_motor
+from src.services import llm
 from src.services.openalex import encerrar_cliente_compartilhado
 
 
@@ -37,6 +38,7 @@ async def ciclo_de_vida(api: FastAPI) -> AsyncIterator[None]:
     finally:
         await motor.dispose()
         await encerrar_cliente_compartilhado()
+        await llm.encerrar_cliente_compartilhado()
 
 
 def criar_app(*, relogio_limite: Callable[[], float] = time.monotonic) -> FastAPI:
