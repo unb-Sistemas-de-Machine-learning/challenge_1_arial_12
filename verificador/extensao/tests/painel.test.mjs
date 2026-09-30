@@ -53,7 +53,7 @@ test("três estados têm rótulo textual e classes de cor distintas", () => {
 
 test("todos os códigos públicos têm mensagem amigável; desconhecido é genérico", () => {
   const codigos = [
-    "entrada_invalida", "limite_excedido", "openalex_indisponivel", "llm_timeout",
+    "entrada_invalida", "limite_excedido", "openalex_indisponivel", "llm_timeout", "llm_indisponivel",
     "recurso_nao_encontrado", "metodo_nao_permitido", "erro_requisicao",
     "servico_indisponivel", "erro_interno",
   ];

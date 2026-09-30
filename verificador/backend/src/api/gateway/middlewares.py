@@ -16,6 +16,7 @@ from starlette.responses import JSONResponse, Response
 
 from src.api.schemas.erro import CodigoErro, Erro
 from src.core.config import settings as settings_module
+from src.services.llm import ErroLLM, LLMTempoEsgotado
 
 logger = logging.getLogger("verificador.gateway")
 HEADER_CORRELACAO = "X-Correlation-ID"
@@ -25,6 +26,7 @@ STATUS_POR_CODIGO = {
     CodigoErro.LIMITE_EXCEDIDO: 429,
     CodigoErro.OPENALEX_INDISPONIVEL: 503,
     CodigoErro.LLM_TIMEOUT: 504,
+    CodigoErro.LLM_INDISPONIVEL: 503,
     CodigoErro.RECURSO_NAO_ENCONTRADO: 404,
     CodigoErro.METODO_NAO_PERMITIDO: 405,
     CodigoErro.ERRO_REQUISICAO: 400,
@@ -37,6 +39,7 @@ MENSAGENS_PUBLICAS = {
     CodigoErro.LIMITE_EXCEDIDO: "Limite de solicitações excedido.",
     CodigoErro.OPENALEX_INDISPONIVEL: "Serviço de busca indisponível.",
     CodigoErro.LLM_TIMEOUT: "Tempo de análise excedido.",
+    CodigoErro.LLM_INDISPONIVEL: "Serviço de análise indisponível.",
     CodigoErro.RECURSO_NAO_ENCONTRADO: "Recurso não encontrado.",
     CodigoErro.METODO_NAO_PERMITIDO: "Método não permitido.",
     CodigoErro.ERRO_REQUISICAO: "Não foi possível processar a solicitação.",
@@ -98,9 +101,7 @@ def _registrar_erro_interno(request: Request, exc: Exception) -> None:
         settings = settings_module.get_settings()
         valores_sensiveis = [
             settings.database_url.get_secret_value(),
-            settings.openai_api_key.get_secret_value()
-            if settings.openai_api_key
-            else None,
+            settings.llm_api_key.get_secret_value() if settings.llm_api_key else None,
             settings.openalex_api_key.get_secret_value()
             if settings.openalex_api_key
             else None,
@@ -161,6 +162,24 @@ def registrar_tratamento_erros(api: FastAPI) -> None:
             exc.codigo, STATUS_POR_CODIGO[exc.codigo], request.state.id_correlacao
         )
 
+    async def erro_llm(request: Request, exc: ErroLLM) -> JSONResponse:
+        # Resposta inválida também vira indisponível: o provedor respondeu
+        # fora do combinado, e o leitor não tem o que corrigir.
+        codigo = (
+            CodigoErro.LLM_TIMEOUT
+            if isinstance(exc, LLMTempoEsgotado)
+            else CodigoErro.LLM_INDISPONIVEL
+        )
+        logger.warning(
+            "Falha na camada de LLM. correlation_id=%s motivo=%s",
+            request.state.id_correlacao,
+            exc,
+        )
+        request.state.erro_padronizado = True
+        return _resposta_erro(
+            codigo, STATUS_POR_CODIGO[codigo], request.state.id_correlacao
+        )
+
     async def erro_http(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         request.state.erro_padronizado = True
         return _resposta_erro(
@@ -172,6 +191,7 @@ def registrar_tratamento_erros(api: FastAPI) -> None:
 
     api.add_exception_handler(RequestValidationError, validar)
     api.add_exception_handler(ErroGateway, erro_previsto)
+    api.add_exception_handler(ErroLLM, erro_llm)
     api.add_exception_handler(StarletteHTTPException, erro_http)
     api.add_exception_handler(Exception, _erro_interno)
 

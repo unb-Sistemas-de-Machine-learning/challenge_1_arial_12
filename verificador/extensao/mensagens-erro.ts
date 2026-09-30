@@ -7,6 +7,7 @@ export const MENSAGENS_ERRO = {
   openalex_indisponivel:
     "A busca de estudos está indisponível. Tente novamente mais tarde.",
   llm_timeout: "A análise demorou demais. Tente novamente.",
+  llm_indisponivel: "A análise está indisponível. Tente novamente mais tarde.",
   recurso_nao_encontrado: "Serviço não encontrado.",
   metodo_nao_permitido: "Esta operação não está disponível.",
   erro_requisicao: "Não foi possível processar a solicitação.",

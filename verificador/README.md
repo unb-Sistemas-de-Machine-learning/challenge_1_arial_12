@@ -90,7 +90,7 @@ Deve voltar o JSON mock. **Só avance quando isso funcionar.**
 
 O healthcheck responde em `http://localhost:8000/health` com `{"ok":true}`.
 O backend lê `.env` na inicialização. `DATABASE_URL` precisa estar preenchida,
-mas o healthcheck não conecta ao banco; `OPENAI_API_KEY` e `OPENALEX_MAILTO` podem ficar
+mas o healthcheck não conecta ao banco; `LLM_API_KEY` e `OPENALEX_MAILTO` podem ficar
 vazios nesta fase. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
 mantém `['*']` — use isso só em desenvolvimento (`APP_DEBUG=true`); fora dele,
 configure a lista com a origem real da extensão publicada.
@@ -114,6 +114,7 @@ mostrar detalhes técnicos da resposta.
 | 429 | `limite_excedido` | Muitas solicitações. Aguarde um pouco e tente novamente. |
 | 503 | `openalex_indisponivel` | A busca de estudos está indisponível. Tente novamente mais tarde. |
 | 504 | `llm_timeout` | A análise demorou demais. Tente novamente. |
+| 503 | `llm_indisponivel` | A análise está indisponível. Tente novamente mais tarde. |
 | 404 | `recurso_nao_encontrado` | Serviço não encontrado. |
 | 405 | `metodo_nao_permitido` | Esta operação não está disponível. |
 | 400 e demais `4xx` | `erro_requisicao` | Não foi possível processar a solicitação. |
@@ -123,6 +124,48 @@ mostrar detalhes técnicos da resposta.
 Se não houver resposta HTTP, a extensão mostra uma mensagem local de falha de
 conexão. A rota `/verificar` ainda devolve o veredito mock: nem a busca na
 OpenAlex nem o LLM estão ligados a ela.
+
+### Camada de LLM (spec 003)
+
+Porta única dos agentes Triador e Juiz para o LLM, em
+[`src/services/llm.py`](backend/src/services/llm.py). **Só camada gratuita:**
+Groq ou Google Gemini, os dois pela API compatível com a OpenAI. Nenhum agente
+usa a camada ainda.
+
+```bash
+LLM_PROVEDOR=groq              # groq ou gemini
+LLM_API_KEY=                   # https://console.groq.com/keys ou https://aistudio.google.com/apikey
+LLM_MODELO=                    # vazio: openai/gpt-oss-20b (groq) ou gemini-3.5-flash (gemini)
+LLM_TIMEOUT_SEGUNDOS=15        # prazo total da chamada, tentativas incluídas
+LLM_MAX_TENTATIVAS=2           # 429, 5xx e falha de conexão são repetidos
+LLM_FORMATO_JSON=json_schema   # json_object para modelos sem saída estruturada
+```
+
+Um agente recebe o cliente por dependência e pede a resposta num formato:
+
+```python
+class Variacoes(BaseModel):
+    buscas: list[str]
+
+@router.post("/triar")
+async def triar(cliente: ClienteLLM = Depends(obter_cliente_llm)):
+    return await cliente.gerar("Gere buscas para: ...", Variacoes)
+```
+
+`gerar` devolve um `Variacoes` já validado ou levanta um erro da camada, que o
+gateway traduz sozinho: prazo estourado vira `504 llm_timeout`; provedor fora
+do ar, recusa ou resposta fora do schema viram `503 llm_indisponivel`. Toda
+chamada deixa uma linha no log `verificador.llm` com o provedor, o modelo, a
+latência, os tokens e as tentativas. A chave nunca aparece no log.
+
+Nos testes, o `DubleLLM` (`src/tests/dubles/llm.py`) entra no lugar do
+provedor, sem rede e sem chave:
+
+```python
+app.dependency_overrides[obter_cliente_llm] = lambda: ClienteLLM(
+    DubleLLM({"buscas": ["a", "b"]})
+)
+```
 
 ### Busca na OpenAlex (spec 002)
 
