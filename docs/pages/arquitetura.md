@@ -82,6 +82,7 @@ src/
 |  |- schemas/           # Pydantic models para validação de entrada/saída
 |- agents/
 |  |- triador.py         # Lógica do Agente Triador (geração de variações)
+|  |- orientacoes/       # Instruções dos agentes em Markdown, versionadas
 |  |- pesquisador.py     # Lógica do Agente Pesquisador
 |  |- juiz.py            # Lógica do Agente Juiz e formatação do veredicto
 |- core/

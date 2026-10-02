@@ -129,8 +129,8 @@ OpenAlex nem o LLM estão ligados a ela.
 
 Porta única dos agentes Triador e Juiz para o LLM, em
 [`src/services/llm.py`](backend/src/services/llm.py). **Só camada gratuita:**
-Groq ou Google Gemini, os dois pela API compatível com a OpenAI. Nenhum agente
-usa a camada ainda.
+Groq ou Google Gemini, os dois pela API compatível com a OpenAI. Quem usa a
+camada hoje é o Triador.
 
 ```bash
 LLM_PROVEDOR=groq              # groq ou gemini
@@ -139,6 +139,8 @@ LLM_MODELO=                    # vazio: openai/gpt-oss-20b (groq) ou gemini-3.5-
 LLM_TIMEOUT_SEGUNDOS=15        # prazo total da chamada, tentativas incluídas
 LLM_MAX_TENTATIVAS=2           # 429, 5xx e falha de conexão são repetidos
 LLM_FORMATO_JSON=json_schema   # json_object para modelos sem saída estruturada
+LLM_TEMPERATURA=0              # zero por padrão: os agentes extraem e classificam
+LLM_SEED=                      # semente da amostragem, para quem a respeita (Groq)
 ```
 
 Um agente recebe o cliente por dependência e pede a resposta num formato:
@@ -166,6 +168,48 @@ app.dependency_overrides[obter_cliente_llm] = lambda: ClienteLLM(
     DubleLLM({"buscas": ["a", "b"]})
 )
 ```
+
+### Agente Triador (spec 003)
+
+Transforma o trecho que o leitor selecionou nas strings de busca que vão à
+OpenAlex, em [`src/agents/triador.py`](backend/src/agents/triador.py). O
+trabalho é partido em duas metades, e essa divisão é o desenho:
+
+| Quem | Faz o quê |
+| :--- | :--- |
+| o LLM | extrai quatro termos do trecho — intervenção, desfecho, condição e população — no jargão inglês da literatura |
+| o código | normaliza, aplica o glossário e monta as strings combinando os termos em **eixos fixos** |
+
+A primeira versão pedia ao modelo as strings prontas, e o resultado era
+instável: o mesmo trecho achava o estudo numa tentativa e não achava na
+seguinte, porque a cada chamada o modelo escolhia outro sinônimo. Tudo o que não
+precisa do modelo saiu do modelo.
+
+As instruções dadas ao LLM são arquivos versionados, e não uma f-string:
+
+```
+backend/src/agents/orientacoes/triador/
+├── ORIENTACOES.md                      # as regras do variador semântico (vai no prompt)
+└── referencias/
+    ├── glossario.md                    # conceito → termo canônico → variantes (lido pelo código)
+    ├── exemplos.md                     # trechos resolvidos (vai no prompt)
+    └── formatos-de-busca.md            # os eixos e a montagem (documentação da equipe)
+```
+
+Mudar uma regra é uma linha de diff que a equipe revisa em PR. O **glossário**
+não é um pedido ao modelo: o código reescreve para o termo canônico qualquer
+variante conhecida (`brain shrinkage` → `brain atrophy`), inclusive o conceito
+escrito em português e a marca de medicamento (`oxycontin` → `oxycodone`).
+
+Para medir as duas coisas que importam — achar o estudo e achar sempre o mesmo:
+
+```bash
+python scripts/eval_triador.py --repeticoes 3
+```
+
+O relatório traz a taxa de acerto (meta: ≥ 80%), a estabilidade das buscas entre
+rodadas e a lista dos casos que oscilaram. Cada caso que oscila é candidato a uma
+linha nova no glossário — o procedimento está no fim de `glossario.md`.
 
 ### Busca na OpenAlex (spec 002)
 

@@ -372,6 +372,32 @@ async def test_modelo_e_formato_json_sao_configuraveis() -> None:
 
 
 @pytest.mark.asyncio
+async def test_temperatura_vai_na_requisicao_e_o_padrao_e_zero() -> None:
+    """Zero é a primeira trava de determinismo dos agentes."""
+    prov, transporte = provedor(devolver(resposta_de_chat("{}")))
+
+    await completar(prov)
+
+    corpo = json.loads(transporte.requisicoes[0].content)
+    assert corpo["temperature"] == 0.0
+    # Sem semente configurada o campo não vai: provedor que não conhece o
+    # parâmetro recusa o pedido inteiro com 400.
+    assert "seed" not in corpo
+
+
+@pytest.mark.asyncio
+async def test_semente_configurada_vai_na_requisicao() -> None:
+    prov, transporte = provedor(
+        devolver(resposta_de_chat("{}")), temperatura=0.2, seed=7
+    )
+
+    await completar(prov)
+
+    corpo = json.loads(transporte.requisicoes[0].content)
+    assert (corpo["temperature"], corpo["seed"]) == (0.2, 7)
+
+
+@pytest.mark.asyncio
 async def test_429_e_transitorio_e_traz_o_retry_after() -> None:
     prov, _ = provedor(
         devolver({"error": {"message": "limite"}}, 429, **{"Retry-After": "3"})
