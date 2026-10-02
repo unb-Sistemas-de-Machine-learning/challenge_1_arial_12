@@ -112,7 +112,9 @@ def test_varias_buscas_chegam_a_openalex_intactas(monkeypatch) -> None:
     recebidas: list[str] = []
 
     def responder(requisicao: httpx.Request) -> httpx.Response:
-        recebidas.append(requisicao.url.params["filter"].replace("title_and_abstract.search:", ""))
+        recebidas.append(
+            requisicao.url.params["filter"].replace("title_and_abstract.search:", "")
+        )
         return httpx.Response(200, json={"results": []})
 
     instalar_cliente(monkeypatch, responder)
