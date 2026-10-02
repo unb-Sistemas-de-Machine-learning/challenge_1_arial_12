@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     llm_max_tentativas: int = Field(default=2, ge=1, le=5)
     # `json_object` para modelos que não aceitam saída estruturada.
     llm_formato_json: Literal["json_schema", "json_object"] = "json_schema"
+    # Zero é o padrão de propósito: os agentes extraem e classificam, e variação
+    # entre chamadas idênticas é defeito, não diversidade. Mexer aqui muda o
+    # resultado dos evals.
+    llm_temperatura: float = Field(default=0.0, ge=0.0, le=2.0)
+    # Semente fixa para a amostragem. A Groq documenta o parâmetro; o endpoint
+    # compatível do Gemini ignora. Vazio não manda o campo.
+    llm_seed: int | None = None
     database_url: SecretStr = Field(validation_alias="DATABASE_URL")
     openalex_mailto: str | None = None
     # Chave gratuita da OpenAlex. Opcional, mas sob carga ela derruba busca

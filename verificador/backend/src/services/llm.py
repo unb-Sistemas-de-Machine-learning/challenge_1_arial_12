@@ -147,6 +147,8 @@ class ProvedorCompativelComOpenAI:
         modelo: str | None = None,
         formato_json: str = "json_schema",
         timeout_segundos: float = 15.0,
+        temperatura: float = 0.0,
+        seed: int | None = None,
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
         if nome not in PROVEDORES:
@@ -160,6 +162,17 @@ class ProvedorCompativelComOpenAI:
         self.nome = nome
         self.modelo = modelo or perfil.modelo_padrao
         self.formato_json = formato_json
+        # Zero por decisão, e não por acaso: os dois agentes fazem extração e
+        # classificação, trabalho em que criatividade é defeito. Com a
+        # temperatura padrão do provedor, o mesmo trecho rendia termos
+        # diferentes a cada chamada e a verificação achava o estudo numa
+        # tentativa e não achava na seguinte.
+        self.temperatura = temperatura
+        # Semente é a outra metade: com ela, o provedor que a respeita (a Groq
+        # documenta; a do Gemini ignora em silêncio) devolve a mesma amostragem
+        # para o mesmo pedido. Não é garantia contratual em nenhum dos dois —
+        # a determinação de verdade está no desenho do agente.
+        self.seed = seed
         self._cliente = openai.AsyncOpenAI(
             api_key=api_key.strip(),
             base_url=perfil.base_url,
@@ -184,6 +197,9 @@ class ProvedorCompativelComOpenAI:
     async def completar(
         self, *, sistema: str, prompt: str, nome_schema: str, schema_json: dict
     ) -> RespostaDoProvedor:
+        # A semente só vai quando configurada: mandar `seed: null` faz provedor
+        # que não conhece o parâmetro recusar o pedido inteiro com 400.
+        opcionais: dict[str, object] = {} if self.seed is None else {"seed": self.seed}
         try:
             resposta = await self._cliente.chat.completions.create(
                 model=self.modelo,
@@ -192,6 +208,8 @@ class ProvedorCompativelComOpenAI:
                     {"role": "user", "content": prompt},
                 ],
                 response_format=self._formato_de_resposta(nome_schema, schema_json),
+                temperature=self.temperatura,
+                **opcionais,
             )
         except openai.APIConnectionError as erro:
             # Inclui o timeout da requisição (`APITimeoutError`).
@@ -293,6 +311,8 @@ class ClienteLLM:
             modelo=settings.llm_modelo,
             formato_json=settings.llm_formato_json,
             timeout_segundos=settings.llm_timeout_segundos,
+            temperatura=settings.llm_temperatura,
+            seed=settings.llm_seed,
         )
         return cls(
             provedor,
