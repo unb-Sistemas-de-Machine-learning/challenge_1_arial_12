@@ -345,7 +345,7 @@ class ClienteOpenAlex:
             self.quantidade_padrao if quantidade is None else quantidade
         )
         parametros: dict[str, object] = {
-            "search": termo,
+            "filter": f"title_and_abstract.search:{termo}",
             "per-page": quantos,
             "select": CAMPOS,
             # O mailto vai na query **e** no User-Agent: a OpenAlex documenta as

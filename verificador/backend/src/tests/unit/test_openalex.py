@@ -453,7 +453,9 @@ async def test_a_consulta_pede_so_os_campos_usados() -> None:
 
     await bancada.cliente.buscar("  polylaminin  ")
 
-    assert bancada.ultima.url.params["search"] == "polylaminin"
+    assert (
+        bancada.ultima.url.params["filter"] == "title_and_abstract.search:polylaminin"
+    )
     assert bancada.ultima.url.params["select"] == openalex_tool.CAMPOS
 
 
@@ -464,7 +466,9 @@ def responder_por_busca(mapa: dict[str, dict | Exception]) -> Acao:
     """Responde conforme a string que chegou, para separar uma busca da outra."""
 
     def acao(requisicao: httpx.Request) -> httpx.Response:
-        termo = requisicao.url.params["search"]
+        termo = requisicao.url.params["filter"].replace(
+            "title_and_abstract.search:", ""
+        )
         item = mapa[termo]
         if isinstance(item, Exception):
             raise item
@@ -645,7 +649,9 @@ async def test_a_sintaxe_booleana_chega_intacta_na_openalex() -> None:
 
     await bancada.cliente.buscar_varias([consulta])
 
-    assert bancada.ultima.url.params["search"] == consulta
+    assert (
+        bancada.ultima.url.params["filter"] == f"title_and_abstract.search:{consulta}"
+    )
 
 
 def test_id_da_openalex_vem_na_forma_curta() -> None:
