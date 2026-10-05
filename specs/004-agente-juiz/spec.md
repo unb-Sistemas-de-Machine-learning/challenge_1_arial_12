@@ -29,7 +29,7 @@ Estudo retratado **nunca** fundamenta `sustenta`. Quando só há estudos retrata
 ## 4. Critérios determinísticos
 
 1. O agente devolve `Veredito` da B05 com `estado`, `justificativa`, `estudo` (quando o estado não é `nada_encontrado`) e `termos=[]`; `id` fica `None` até persistência posterior.
-2. A saída do LLM contém enum fechado `Estado`, DOI selecionado e justificativa em português entre 20 e **600 caracteres**. O teto de 600 é provisório para esta entrega e deve ser revisto com a equipe se o painel exigir outro tamanho.
+2. A saída do LLM contém enum fechado `Estado`, relação interna (`compativel`, `parcial` ou `ausente`), DOI selecionado e justificativa em português entre 20 e **600 caracteres**. O código rejeita estado incoerente com a relação declarada e tenta novamente uma vez. A relação não aparece no schema B05. O teto de 600 é provisório para esta entrega e deve ser revisto com a equipe se o painel exigir outro tamanho.
 3. Formato inválido, estado fora do enum, justificativa vazia/longa demais, idioma inadequado, DOI ausente ou não presente na entrada, referência a DOI estranho no texto e seleção de retratado como `sustenta` são rejeitados. O agente refaz a chamada **uma vez**; persistindo a falha, levanta `RespostaInvalidaDoLLM`, traduzível pelo gateway para erro padronizado `llm_indisponivel`/503.
 4. O campo `estudo` do `Veredito` é construído pelo código **a partir da entrada**, nunca copiado de título, ano ou retratação inventados pelo LLM. O DOI selecionado e todo DOI citado na justificativa devem constar dos abstracts recebidos.
 5. Lista sem abstracts utilizáveis devolve `nada_encontrado`, `estudo=None` e justificativa fixa em português **sem chamar LLM**. Abstracts sem DOI não podem ser selecionados como fonte.

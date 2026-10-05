@@ -218,6 +218,9 @@ abstracts recebidos e devolve `sustenta`, `exagera` ou `nada_encontrado` no
 schema da extensão. O DOI e os metadados da fonte são conferidos contra a
 entrada; estudo retratado não pode sustentar a alegação. A rota `/verificar`
 continua mock até a integração da esteira completa.
+Internamente, o LLM declara primeiro se a evidência é compatível, parcial ou
+ausente; o código rejeita um estado incompatível com essa relação antes de
+montar o veredito.
 
 O conjunto inicial tem 40 casos **sintéticos**, identificados no JSONL. Eles
 testam a classificação e o formato, mas não representam evidência científica
@@ -225,12 +228,23 @@ real. Na pasta `backend/`, execute:
 
 ```bash
 python scripts/eval_juiz.py --validar-dataset  # apenas confere os rótulos, sem chave
-python scripts/eval_juiz.py                    # usa o LLM do .env
+python scripts/eval_juiz.py --caso S02 --caso S03  # diagnóstico parcial com LLM
+python scripts/eval_juiz.py --caso E02 --mostrar-justificativa
+python scripts/eval_juiz.py --intervalo 10       # conjunto completo, pausa entre casos
 ```
 
-A segunda linha precisa de `DATABASE_URL` e `LLM_API_KEY` locais. O relatório
+As execuções com LLM precisam de `DATABASE_URL` e `LLM_API_KEY` locais. O relatório
 separa acerto do estado, `sustenta` sem abstract relacionado e `sustenta` com
-estudo retratado. Sem rodar a segunda linha, as taxas **não foram medidas**.
+estudo retratado. Sem rodar o conjunto inteiro, as taxas de aceite **não foram medidas**.
+O diagnóstico por `--caso` mostra apenas a categoria segura da falha, sem
+resposta bruta ou segredo, e **não** valida a meta de acerto do conjunto inteiro.
+`--mostrar-justificativa` exibe apenas o texto do veredito já validado e exige
+`--caso`; use-o somente com os exemplos sintéticos ou dados autorizados. Em
+`429`, o runner mostra `Retry-After` e os contadores conhecidos do Groq, quando
+presentes, e interrompe a rodada para não desperdiçar chamadas. `--intervalo`
+reduz a frequência, mas não garante que uma quota diária ou de tokens não seja
+atingida. O tipo exato aparece como "não identificado" quando o provedor não o
+informa nos dados seguros disponíveis.
 
 ### Busca na OpenAlex (spec 002)
 

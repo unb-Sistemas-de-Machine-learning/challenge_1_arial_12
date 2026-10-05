@@ -4,6 +4,7 @@ import json
 import logging
 import re
 from collections.abc import Sequence
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -27,7 +28,9 @@ SISTEMA = (
 
 _DOI = re.compile(r"10\.\d{4,9}/[^\s<>\"']+", re.IGNORECASE)
 _NUMERO_DE_ESTUDO = re.compile(
-    r"\b(?:estudo|artigo|abstract|paper|study)\s*#?\s*\d+\b", re.IGNORECASE
+    # "estudo 1" é marcador interno; "estudo 10.0000/..." é um DOI válido.
+    r"\b(?:estudo|artigo|abstract|paper|study)\s*#?\s*\d+\b(?!\.)",
+    re.IGNORECASE,
 )
 _JARGAO_DE_PROMPT = re.compile(
     r"\b(?:prompt|json|llm|system message|instruções do sistema)\b",
@@ -40,16 +43,28 @@ _PALAVRAS_PORTUGUES = frozenset(
         "apoia",
         "associação",
         "causalidade",
+        "com",
+        "da",
+        "de",
+        "do",
+        "em",
         "evidência",
         "estudo",
         "estudos",
+        "foi",
         "indica",
         "indicam",
         "mas",
+        "mais",
         "mostra",
         "mostram",
+        "na",
         "não",
+        "no",
         "observou",
+        "para",
+        "por",
+        "que",
         "resultado",
         "resultados",
         "sustenta",
@@ -57,15 +72,29 @@ _PALAVRAS_PORTUGUES = frozenset(
 )
 
 
+class RelacaoEvidencia(str, Enum):
+    COMPATIVEL = "compativel"
+    PARCIAL = "parcial"
+    AUSENTE = "ausente"
+
+
 class RespostaDoJuiz(BaseModel):
     """JSON do modelo; as regras que dependem da entrada são verificadas depois."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
+    relacao: RelacaoEvidencia
     estado: Estado
     doi: str | None
     evidencia: str | None
     justificativa: str = Field(min_length=20, max_length=MAX_JUSTIFICATIVA)
+
+
+ESTADO_POR_RELACAO = {
+    RelacaoEvidencia.COMPATIVEL: Estado.SUSTENTA,
+    RelacaoEvidencia.PARCIAL: Estado.EXAGERA,
+    RelacaoEvidencia.AUSENTE: Estado.NADA_ENCONTRADO,
+}
 
 
 def normalizar_doi(valor: str | None) -> str:
@@ -129,6 +158,7 @@ class AgenteJuiz:
                 if tentativa:
                     pedido += (
                         "\n\nA resposta anterior falhou na validação. Revise o formato, "
+                        "a relação entre alegação e abstract, o estado correspondente, "
                         "a fonte, a citação literal e a justificativa antes de responder."
                     )
                 resposta = await self.cliente_llm.gerar(
@@ -171,6 +201,10 @@ class AgenteJuiz:
         self, resposta: RespostaDoJuiz, trabalhos: Sequence[TrabalhoEncontrado]
     ) -> Veredito:
         justificativa = resposta.justificativa
+        if resposta.estado != ESTADO_POR_RELACAO[resposta.relacao]:
+            raise RespostaInvalidaDoLLM(
+                "Estado incoerente com a relação declarada entre alegação e estudo"
+            )
         if not _parece_portugues(justificativa):
             raise RespostaInvalidaDoLLM("Justificativa não parece estar em português")
         if _NUMERO_DE_ESTUDO.search(justificativa) or _JARGAO_DE_PROMPT.search(
@@ -199,8 +233,8 @@ class AgenteJuiz:
 
         doi = normalizar_doi(resposta.doi)
         trabalho = por_doi.get(doi)
-        if not trabalho or doi not in referencias:
-            raise RespostaInvalidaDoLLM("DOI selecionado não confere com a entrada")
+        if not trabalho:
+            raise RespostaInvalidaDoLLM("DOI selecionado não consta da entrada")
         if resposta.estado == Estado.SUSTENTA and trabalho.retratado:
             raise RespostaInvalidaDoLLM("Estudo retratado não pode sustentar")
         if not resposta.evidencia or not _trecho_literal(

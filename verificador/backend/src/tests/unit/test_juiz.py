@@ -3,11 +3,13 @@
 import pytest
 
 from src.agents.juiz import (
+    ARQUIVO_DE_ORIENTACOES,
     JUSTIFICATIVA_SEM_EVIDENCIA,
     MAX_JUSTIFICATIVA,
     AgenteJuiz,
     normalizar_doi,
 )
+from src.agents import orientacoes
 from src.api.schemas.busca import TrabalhoEncontrado
 from src.api.schemas.verificacao import Estado, Veredito
 from src.services.llm import ClienteLLM, LLMTempoEsgotado, RespostaInvalidaDoLLM
@@ -39,11 +41,18 @@ def trabalho(
 def resposta(
     *,
     estado: str = "sustenta",
+    relacao: str | None = None,
     doi: str | None = DOI,
     evidencia: str | None = "melhora moderada no desfecho",
     justificativa: str = JUSTIFICATIVA,
 ) -> dict:
     return {
+        "relacao": relacao
+        or {
+            "sustenta": "compativel",
+            "exagera": "parcial",
+            "nada_encontrado": "ausente",
+        }.get(estado, "compativel"),
         "estado": estado,
         "doi": doi,
         "evidencia": evidencia,
@@ -111,6 +120,81 @@ async def test_exagera_cita_o_estudo_recebido() -> None:
     assert veredito.estado == Estado.EXAGERA
     assert veredito.estudo is not None
     assert veredito.estudo.doi == DOI
+
+
+@pytest.mark.asyncio
+async def test_doi_valido_na_resposta_dispensa_repeticao_na_justificativa() -> None:
+    mensagem = (
+        "O estudo recebido observou melhora moderada apenas em adultos, "
+        "enquanto a alegação promete uma cura para todas as pessoas."
+    )
+    agente, duble = juiz(resposta(estado="exagera", justificativa=mensagem))
+
+    veredito = await agente.julgar("A intervenção cura todas as pessoas", [trabalho()])
+
+    assert veredito.estado == Estado.EXAGERA
+    assert veredito.estudo is not None
+    assert veredito.estudo.doi == DOI
+    assert len(duble.chamadas) == 1
+
+
+@pytest.mark.asyncio
+async def test_estudo_relacionado_nao_pode_virar_nada_encontrado() -> None:
+    mensagem = (
+        "O estudo disponível trata da mesma intervenção e do mesmo desfecho, "
+        "mas relata um efeito menor do que a alegação promete."
+    )
+    agente, duble = juiz(
+        resposta(
+            estado="nada_encontrado",
+            relacao="parcial",
+            doi=None,
+            evidencia=None,
+            justificativa=mensagem,
+        ),
+        resposta(estado="exagera", justificativa=JUSTIFICATIVA),
+    )
+
+    veredito = await agente.julgar("A alegação amplia o efeito", [trabalho()])
+
+    assert veredito.estado == Estado.EXAGERA
+    assert len(duble.chamadas) == 2
+
+
+@pytest.mark.asyncio
+async def test_doi_apos_palavra_estudo_nao_e_numero_interno() -> None:
+    mensagem = (
+        f"O estudo {DOI} relata melhora moderada no desfecho medido "
+        "em adultos, apoiando esta alegação limitada."
+    )
+    agente, duble = juiz(resposta(justificativa=mensagem))
+
+    veredito = await agente.julgar("Alegação limitada a adultos", [trabalho()])
+
+    assert veredito.estado == Estado.SUSTENTA
+    assert len(duble.chamadas) == 1
+
+
+@pytest.mark.asyncio
+async def test_frase_em_portugues_sem_vocabulario_especifico_e_aceita() -> None:
+    abstract = "No ensaio, o filtro A reteve mais partículas do que o filtro B."
+    mensagem = (
+        f"O filtro A reteve mais partículas do que o filtro B no ensaio "
+        f"descrito em {DOI}."
+    )
+    agente, duble = juiz(
+        resposta(
+            evidencia="o filtro A reteve mais partículas do que o filtro B",
+            justificativa=mensagem,
+        )
+    )
+
+    veredito = await agente.julgar(
+        "O filtro A reteve mais partículas", [trabalho(abstract=abstract)]
+    )
+
+    assert veredito.estado == Estado.SUSTENTA
+    assert len(duble.chamadas) == 1
 
 
 @pytest.mark.asyncio
@@ -197,3 +281,15 @@ async def test_timeout_do_provedor_nao_gera_retry_extra_do_juiz() -> None:
 
 def test_normalizacao_de_doi_aceita_url_do_resolvedor() -> None:
     assert normalizar_doi("https://doi.org/10.0000/EVAL-1") == DOI
+
+
+def test_prompt_distingue_exagero_de_ausencia_de_estudo() -> None:
+    documento = orientacoes.ler(ARQUIVO_DE_ORIENTACOES)
+    corpo = " ".join(documento.corpo.split())
+
+    assert documento.versao == "4"
+    assert "`parcial` → `exagera`" in corpo
+    assert "Não comprova a promessa inteira" in corpo
+    assert "estudo pertinente `ausente`" in corpo
+    assert "em animais, mas a alegação promete o efeito em humanos" in corpo
+    assert "medida indireta" in corpo
