@@ -19,6 +19,7 @@ entre eles é o endereço, a chave e o modelo.
 
 import asyncio
 import logging
+import math
 import re
 import time
 from collections.abc import Awaitable, Callable
@@ -93,12 +94,30 @@ class RespostaInvalidaDoLLM(ErroLLM):
     """A resposta não é JSON ou não obedece ao schema pedido."""
 
 
+@dataclass(frozen=True)
+class DiagnosticoDeLimite:
+    """Somente campos seguros do 429; jamais guarda chave ou corpo bruto."""
+
+    tipo: str | None = None
+    requisicoes_restantes_dia: int | None = None
+    tokens_restantes_minuto: int | None = None
+    reinicio_requisicoes: str | None = None
+    reinicio_tokens: str | None = None
+
+
 class FalhaTransitoria(Exception):
     """Sinal do provedor para a camada: esta falha vale uma nova tentativa."""
 
-    def __init__(self, motivo: str, *, retry_after: float | None = None) -> None:
+    def __init__(
+        self,
+        motivo: str,
+        *,
+        retry_after: float | None = None,
+        diagnostico_limite: DiagnosticoDeLimite | None = None,
+    ) -> None:
         super().__init__(motivo)
         self.retry_after = retry_after
+        self.diagnostico_limite = diagnostico_limite
 
 
 # --- Provedor -----------------------------------------------------------------
@@ -131,9 +150,53 @@ def _segundos_do_retry_after(resposta: httpx.Response | None) -> float | None:
     if resposta is None:
         return None
     try:
-        return float(resposta.headers.get("retry-after", ""))
+        segundos = float(resposta.headers.get("retry-after", ""))
     except ValueError:
         return None
+    return segundos if math.isfinite(segundos) and segundos >= 0 else None
+
+
+_TIPOS_DE_LIMITE = frozenset({"RPM", "RPD", "TPM", "TPD", "ITPM", "OTPM"})
+_DURACAO_SEGURA = re.compile(r"(?:\d+(?:\.\d+)?(?:ms|s|m|h|d))+\Z")
+
+
+def _inteiro_de_cabecalho(resposta: httpx.Response, nome: str) -> int | None:
+    valor = resposta.headers.get(nome, "")
+    return int(valor) if valor.isdecimal() and len(valor) <= 12 else None
+
+
+def _duracao_de_cabecalho(resposta: httpx.Response, nome: str) -> str | None:
+    valor = resposta.headers.get(nome, "")
+    return valor if len(valor) <= 32 and _DURACAO_SEGURA.fullmatch(valor) else None
+
+
+def _diagnostico_de_limite(resposta: httpx.Response | None) -> DiagnosticoDeLimite:
+    if resposta is None:
+        return DiagnosticoDeLimite()
+    tipo: str | None = None
+    try:
+        corpo = resposta.json()
+        mensagem = corpo.get("error", {}).get("message", "")
+        if isinstance(mensagem, str):
+            sigla = re.search(r"\b(?:ITPM|OTPM|RPM|RPD|TPM|TPD)\b", mensagem)
+            if sigla and sigla.group() in _TIPOS_DE_LIMITE:
+                tipo = sigla.group()
+    except (ValueError, AttributeError, TypeError):
+        pass
+
+    return DiagnosticoDeLimite(
+        tipo=tipo,
+        requisicoes_restantes_dia=_inteiro_de_cabecalho(
+            resposta, "x-ratelimit-remaining-requests"
+        ),
+        tokens_restantes_minuto=_inteiro_de_cabecalho(
+            resposta, "x-ratelimit-remaining-tokens"
+        ),
+        reinicio_requisicoes=_duracao_de_cabecalho(
+            resposta, "x-ratelimit-reset-requests"
+        ),
+        reinicio_tokens=_duracao_de_cabecalho(resposta, "x-ratelimit-reset-tokens"),
+    )
 
 
 class ProvedorCompativelComOpenAI:
@@ -218,6 +281,11 @@ class ProvedorCompativelComOpenAI:
             raise FalhaTransitoria(
                 f"limite de uso do {self.nome} atingido (429)",
                 retry_after=_segundos_do_retry_after(erro.response),
+                diagnostico_limite=(
+                    _diagnostico_de_limite(erro.response)
+                    if self.nome == "groq"
+                    else None
+                ),
             ) from erro
         except openai.InternalServerError as erro:
             raise FalhaTransitoria(
