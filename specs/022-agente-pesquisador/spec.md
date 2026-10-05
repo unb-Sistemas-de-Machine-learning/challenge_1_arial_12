@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | :--- | :--- |
-| **Status** | rascunho |
+| **Status** | em revisão |
 | **Autor** | Breno Fernandes |
 | **Branch** | `feature/020-agente-pesquisador` |
 | **Issue** | [#20](https://github.com/unb-Sistemas-de-Machine-learning/challenge_1_arial_12/issues/20) |
@@ -43,13 +43,17 @@ Esta spec cria o Pesquisador e liga a esteira **Triador → Pesquisador → Juiz
 
 8. `POST /verificar` executa Triador → Pesquisador → Juiz e devolve o `Veredito` produzido pelo Juiz, no mesmo contrato HTTP de hoje (`Veredito` da B05). A extensão não precisa mudar.
 9. `routes.py` não contém lógica de aquisição para a esteira: a rota apenas chama as três etapas, registra o veredito e responde.
-10. O veredito é gravado com `registrar_veredito`, e o `id` devolvido ao leitor é o da linha gravada, válido para `POST /feedback`.
+10. O veredito é gravado com `registrar_veredito`, e o `id` devolvido ao leitor é o da linha gravada, válido para `POST /feedback`. Se a gravação falhar, o leitor recebe o mesmo veredito com `id = null` (a extensão esconde os botões de feedback) e a falha é registrada no log; a verificação não vira erro.
 11. Erros chegam à extensão no formato padronizado da spec `011`:
     - todas as buscas falharam → `openalex_indisponivel` (503);
     - o Juiz estourou o tempo → `llm_timeout` (504);
     - o Juiz não conseguiu responder de forma válida → `llm_indisponivel` (503).
 12. Falha do LLM **no Triador** não vira erro: a esteira segue só com o trecho original, como já definido na spec do Triador.
 13. `POST /buscar` continua existindo, sem mudança de contrato, para testes manuais (Postman, `/docs`).
+14. O campo `termos` do veredito traz os **conceitos** que o Triador extraiu do trecho (intervenção, desfecho, condição e população, já na forma canônica do glossário), um por item, sem vazios e sem repetição. Quando o LLM do Triador falha, `termos` vem vazio e a extensão esconde a seção.
+15. O Juiz recebe no máximo **5 trabalhos**, o padrão atual do cliente OpenAlex (`TOP_PADRAO`). O valor pode ser aumentado depois, se a qualidade pedir.
+16. Não há teto de tempo para a verificação inteira: cada etapa segue com o próprio timeout já configurado (LLM e OpenAlex).
+17. O `verificador/README.md` informa que testar `POST /verificar` exige `LLM_API_KEY` e `OPENALEX_MAILTO` preenchidos no `.env`, e o roteiro local deixa de prometer o circuito "sem IA e sem OpenAlex". Não existe modo mock: sem chave, `/verificar` responde `llm_indisponivel` sempre que houver trabalhos para o Juiz.
 
 ## 4. Fora de escopo
 
@@ -57,7 +61,8 @@ Esta spec cria o Pesquisador e liga a esteira **Triador → Pesquisador → Juiz
 - Reaproveitar um veredito anterior pelo hash do trecho (`buscar_por_hash`).
 - BERTopic, ranqueamento ou qualquer reclassificação dos trabalhos além da ordem que a OpenAlex e o cliente já produzem.
 - Servidor MCP para a OpenAlex.
-- Mudar o comportamento do Triador, do Juiz, do prompt de qualquer agente ou da camada de LLM.
+- Mudar o comportamento do Juiz, o prompt de qualquer agente ou a camada de LLM. No Triador, a única mudança é **expor** os conceitos que ele já extrai (critério 14); as buscas que ele gera continuam idênticas.
+- Orçamento de tempo total para a verificação.
 - Mudar a extensão ou o contrato HTTP de `/verificar`, `/buscar` e `/feedback`.
 - Remover o campo `url` do pedido (discussão separada, ligada à spec `021`).
 - Novo eval set: o Pesquisador é determinístico, e Triador e Juiz já têm os seus.
@@ -78,14 +83,15 @@ O Pesquisador **não usa LLM**. A esteira usa os LLMs do Triador e do Juiz sem a
 
 ## 6. Perguntas em aberto
 
-- [ ] **`termos` do veredito.** Hoje o Juiz devolve `termos=[]` e a extensão só mostra a seção quando há termos. Proposta: preencher com as variações geradas pelo Triador, sem o trecho original. Alternativa: manter vazio nesta entrega.
-- [ ] **Falha ao gravar no banco.** Proposta: o leitor recebe o veredito com `id = null` (a extensão já esconde os botões de feedback nesse caso) e o erro vai para o log, em vez de perder uma análise já feita. Alternativa: responder `erro_interno`.
-- [ ] **Quantos trabalhos vão ao Juiz.** O cliente corta em 5 por padrão, e no teste manual 3 de 4 vieram sem abstract, sobrando poucos para o Juiz. Manter 5 ou deixar configurável com um valor maior? Mais trabalhos significam mais tokens por chamada do Juiz.
-- [ ] **Tempo total da verificação.** Triador, OpenAlex (com repetições) e Juiz (com uma nova tentativa) somados podem passar de 30 s. Definimos um orçamento total, ou cada etapa segue só com o próprio timeout?
-- [ ] **Sem `LLM_API_KEY` no servidor**, o Juiz falha e `/verificar` passa a responder `llm_indisponivel` sempre que houver trabalhos. O roteiro local do README (que hoje funciona sem chave) precisa ser atualizado. Confirmar que isso é aceitável.
+- [x] **`termos` do veredito.** Decidido: conceitos do Triador (critério 14).
+- [x] **Falha ao gravar no banco.** Decidido: veredito com `id = null` e falha no log (critério 10), para não descartar uma análise que já custou duas chamadas de LLM.
+- [x] **Quantos trabalhos vão ao Juiz.** Decidido: mantém 5 (critério 15). Aumentar só se a qualidade pedir, sabendo que muitos trabalhos chegam sem abstract.
+- [x] **Tempo total da verificação.** Decidido: sem teto nesta entrega (critério 16).
+- [x] **Sem `LLM_API_KEY` no servidor.** Decidido: aceito, sem modo mock; o README é atualizado (critério 17).
 
 ## 7. Histórico
 
 | Data | Mudança |
 | :--- | :--- |
 | 2026-10-05 | Criação da spec a partir da issue #20; o contrato fica numa spec própria porque a `004` virou a spec do Juiz |
+| 2026-10-05 | Decide `termos` (conceitos do Triador), limite de 5 trabalhos, ausência de teto de tempo, README sem modo mock e `id = null` quando a gravação falha; spec vai para revisão |

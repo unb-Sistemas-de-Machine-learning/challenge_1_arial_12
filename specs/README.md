@@ -27,7 +27,7 @@ escrito nela será inventado.
 | 011 | [Tratamento de erro padronizado no Gateway](011-erro-padronizado-gateway/spec.md) | implementada | `feature/011-erro-padronizado-gateway` |
 | 012 | [Limite de requisições por origem](012-limite-de-requisicoes-por-origem/spec.md) | implementada | `feature/012-limite-de-requisicoes-por-origem` |
 | 015 | [Painel de veredicto com fonte clicável e estados de erro](015-painel-veredicto-fonte-erros/spec.md) | em revisão | `feature/015-painel-veredicto-fonte-erros` |
-| 022 | [Agente Pesquisador e esteira real do `/verificar`](022-agente-pesquisador/spec.md) | rascunho | `feature/020-agente-pesquisador` |
+| 022 | [Agente Pesquisador e esteira real do `/verificar`](022-agente-pesquisador/spec.md) | em revisão | `feature/020-agente-pesquisador` |
 
 **Status possíveis:** `rascunho` → `em revisão` → `aprovada` → `implementada`.
 Uma spec que morreu no caminho vira `abandonada`, mas **continua na tabela** e
