@@ -10,7 +10,8 @@
 - [x] Implementar runner e validar a estrutura do dataset sem LLM.
 - [x] Rodar suíte e Ruff localmente (Python 3.14 com dependências compatíveis).
 - [x] Rodar o eval v3 com LLM real e registrar as três métricas nesta task.
-- [ ] Repetir o eval completo com o prompt v4 e registrar as métricas no PR.
+- [x] Repetir o eval completo com o prompt atual no Groq.
+- [ ] Registrar as métricas da v5 no PR.
 - [ ] Revisar com a equipe rótulos/abstracts reais antes de tratar o acerto como qualidade científica.
 
 ## Rodada exploratória
@@ -30,3 +31,13 @@ estudo retratado e zero falhas de chamada/validação. E05 foi o único erro:
 camundongos para uma alegação sobre humanos. O prompt v4 explicita essa
 fronteira. **Os números do v3 não medem o v4**; repetir o eval integral antes
 de atribuir uma taxa de acerto à nova versão.
+
+No v4, E02 voltou a `nada_encontrado` apesar de a justificativa comparar o
+estudo pertinente com a alegação. A rodada integral foi interrompida em E05
+por limite de tokens por minuto (`429`); a taxa parcial não mede o aceite.
+O prompt v5 explicita uma checagem de pertinência anterior à checagem de
+suporte integral. Na rodada integral da v5 informada pelo executor, os 40 casos
+terminaram com apenas E02 incorreto: 39/40 (97,5%). E02 continuou sendo
+`nada_encontrado` em vez de `exagera` e deve constar como limitação conhecida
+no PR. Conferir e transcrever as linhas finais do runner no PR, inclusive as
+contagens dos dois erros inaceitáveis e das falhas de chamada/validação.

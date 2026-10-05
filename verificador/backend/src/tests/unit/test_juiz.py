@@ -287,9 +287,10 @@ def test_prompt_distingue_exagero_de_ausencia_de_estudo() -> None:
     documento = orientacoes.ler(ARQUIVO_DE_ORIENTACOES)
     corpo = " ".join(documento.corpo.split())
 
-    assert documento.versao == "4"
+    assert documento.versao == "5"
     assert "`parcial` → `exagera`" in corpo
     assert "Não comprova a promessa inteira" in corpo
     assert "estudo pertinente `ausente`" in corpo
     assert "em animais, mas a alegação promete o efeito em humanos" in corpo
     assert "medida indireta" in corpo
+    assert "procure um abstract que prove a frase inteira" in corpo

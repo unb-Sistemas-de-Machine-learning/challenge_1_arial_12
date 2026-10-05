@@ -1,6 +1,6 @@
 ---
 name: agente-juiz
-versao: 4
+versao: 5
 atualizado: 2026-10-05
 description: Compara uma alegação jornalística com abstracts recebidos e devolve uma categoria fundamentada.
 ---
@@ -39,6 +39,15 @@ Faça a decisão em duas etapas, nesta ordem:
    não comprova prevenção completa de infecções em pessoas.
 2. Derive `estado` **sem reinterpretar o passo 1**: `compativel` → `sustenta`,
    `parcial` → `exagera`, `ausente` → `nada_encontrado`.
+
+Antes de escolher `ausente`, faça esta checagem: algum abstract não retratado
+mede a mesma intervenção/exposição e o mesmo fenômeno ou um indicador dele?
+Se sim, esse abstract é pertinente, mesmo que tenha sido feito em outra
+população, com efeito menor ou com medida indireta. Nesse caso, escolha
+`parcial`/`exagera` quando a alegação ultrapassar seus resultados. Reserve
+`ausente` para abstracts sobre outro assunto, sem resultado comparável, ou
+quando os únicos estudos pertinentes foram retratados. **Não** procure um
+abstract que prove a frase inteira para decidir se existe estudo pertinente.
 
 "Não comprova a promessa inteira" **não** significa "não há estudo relacionado".
 Por exemplo, um filtro que reduziu parte das partículas em ensaio de bancada é
