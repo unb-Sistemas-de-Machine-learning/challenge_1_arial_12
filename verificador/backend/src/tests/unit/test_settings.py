@@ -177,6 +177,12 @@ def test_get_settings_usa_cache_e_permite_sobrescrita_em_teste(monkeypatch) -> N
             "postgresql://u:s@ep-x.neon.tech/verificador?sslmode=require",
             "postgresql+asyncpg://u:s@ep-x.neon.tech/verificador?ssl=require",
         ),
+        # A string que o painel do Neon oferece para copiar traz o
+        # `channel_binding` junto; ele nao existe no asyncpg e cai fora.
+        (
+            "postgresql://u:s@ep-x.neon.tech/v?sslmode=require&channel_binding=require",
+            "postgresql+asyncpg://u:s@ep-x.neon.tech/v?ssl=require",
+        ),
         # `postgres://` e a forma antiga, ainda usada por alguns paineis.
         (
             "postgres://u:s@host/v?sslmode=verify-full",

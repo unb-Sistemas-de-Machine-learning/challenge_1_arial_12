@@ -19,6 +19,13 @@ BACKEND_DIR = Path(__file__).resolve().parents[3]
 # segredo no painel, e descobrir o erro no primeiro deploy.
 _ESQUEMAS_SINCRONOS = ("postgresql", "postgres")
 
+# Parametros que so o libpq entende e que nao tem equivalente no asyncpg: ele
+# recebe cada item da query como argumento nomeado de `connect()` e estoura em
+# qualquer um que nao conheca. `channel_binding` vem na string que o Neon
+# oferece para copiar, ao lado do `sslmode`; descartar e o comportamento certo
+# porque o canal ja esta sob TLS pelo `ssl`.
+_PARAMETROS_SO_DO_LIBPQ = frozenset({"channel_binding"})
+
 
 def normalizar_url_do_banco(url: str) -> str:
     partes = urlsplit(url)
@@ -34,6 +41,7 @@ def normalizar_url_do_banco(url: str) -> str:
     consulta = [
         ("ssl", valor) if chave == "sslmode" else (chave, valor)
         for chave, valor in consulta
+        if chave not in _PARAMETROS_SO_DO_LIBPQ
     ]
     return urlunsplit(
         (
