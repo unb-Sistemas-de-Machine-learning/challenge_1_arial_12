@@ -53,7 +53,7 @@ Esta spec cria o Pesquisador e liga a esteira **Triador → Pesquisador → Juiz
 14. O campo `termos` do veredito traz os **conceitos** que o Triador extraiu do trecho (intervenção, desfecho, condição e população, já na forma canônica do glossário), um por item, sem vazios e sem repetição. Quando o LLM do Triador falha, `termos` vem vazio e a extensão esconde a seção.
 15. O Juiz recebe no máximo **5 trabalhos**, o padrão atual do cliente OpenAlex (`TOP_PADRAO`). O valor pode ser aumentado depois, se a qualidade pedir.
 16. Não há teto de tempo para a verificação inteira: cada etapa segue com o próprio timeout já configurado (LLM e OpenAlex).
-17. O `verificador/README.md` informa que testar `POST /verificar` exige `LLM_API_KEY` e `OPENALEX_MAILTO` preenchidos no `.env`, e o roteiro local deixa de prometer o circuito "sem IA e sem OpenAlex". Não existe modo mock: sem chave, `/verificar` responde `llm_indisponivel` sempre que houver trabalhos para o Juiz.
+17. O `verificador/README.md` informa que testar `POST /verificar` exige `LLM_API_KEY` e `OPENALEX_MAILTO` preenchidos no `.env`, e o roteiro local deixa de prometer o circuito "sem IA e sem OpenAlex". Não existe modo mock: sem chave, `/verificar` responde `llm_indisponivel` (503).
 
 ## 4. Fora de escopo
 
@@ -95,3 +95,4 @@ O Pesquisador **não usa LLM**. A esteira usa os LLMs do Triador e do Juiz sem a
 | :--- | :--- |
 | 2026-10-05 | Criação da spec a partir da issue #20; o contrato fica numa spec própria porque a `004` virou a spec do Juiz |
 | 2026-10-05 | Decide `termos` (conceitos do Triador), limite de 5 trabalhos, ausência de teto de tempo, README sem modo mock e `id = null` quando a gravação falha; spec vai para revisão |
+| 2026-10-05 | Critério 17 simplificado no plano: sem chave, `/verificar` responde `llm_indisponivel` sempre, pela dependência `obter_cliente_llm` que já existe |
