@@ -211,6 +211,27 @@ O relatório traz a taxa de acerto (meta: ≥ 80%), a estabilidade das buscas en
 rodadas e a lista dos casos que oscilaram. Cada caso que oscila é candidato a uma
 linha nova no glossário — o procedimento está no fim de `glossario.md`.
 
+### Agente Juiz (spec 004)
+
+[`src/agents/juiz.py`](backend/src/agents/juiz.py) compara a alegação com os
+abstracts recebidos e devolve `sustenta`, `exagera` ou `nada_encontrado` no
+schema da extensão. O DOI e os metadados da fonte são conferidos contra a
+entrada; estudo retratado não pode sustentar a alegação. A rota `/verificar`
+continua mock até a integração da esteira completa.
+
+O conjunto inicial tem 40 casos **sintéticos**, identificados no JSONL. Eles
+testam a classificação e o formato, mas não representam evidência científica
+real. Na pasta `backend/`, execute:
+
+```bash
+python scripts/eval_juiz.py --validar-dataset  # apenas confere os rótulos, sem chave
+python scripts/eval_juiz.py                    # usa o LLM do .env
+```
+
+A segunda linha precisa de `DATABASE_URL` e `LLM_API_KEY` locais. O relatório
+separa acerto do estado, `sustenta` sem abstract relacionado e `sustenta` com
+estudo retratado. Sem rodar a segunda linha, as taxas **não foram medidas**.
+
 ### Busca na OpenAlex (spec 002)
 
 `POST /buscar` recebe uma **lista** de strings de busca e devolve os trabalhos
@@ -219,7 +240,7 @@ numa lista única, sem repetição. Por baixo é
 API REST da OpenAlex, sem camada de protocolo no meio.
 
 `POST /verificar` **ainda não chama a busca** — continua devolvendo o veredito
-mock até o Juiz existir.
+mock até a integração da esteira Triador → busca → Juiz.
 
 Cada string vai para a OpenAlex sem alteração, então a sintaxe dela vale: aspas
 para frase exata, `AND`, `OR` e `NOT` em maiúsculas, e parênteses para agrupar.
