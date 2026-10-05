@@ -18,16 +18,13 @@ services:
     # Render nao derruba o deploy por indisponibilidade do banco.
     healthCheckPath: /health
 
-    # As migracoes rodam aqui, e nao em `preDeployCommand`, porque pre-deploy
-    # exige plano pago. Rodar na subida e idempotente (`upgrade head` em banco
-    # atualizado nao faz nada) e custa pouco; no plano gratuito ha uma unica
-    # instancia, entao nao ha duas migracoes concorrentes.
-    #
-    # O `$PORT` e o Render que define; o 8000 e so para o mesmo comando
-    # funcionar fora dele.
-    dockerCommand: >-
-      sh -c "alembic upgrade head &&
-      uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+    # O comando de subida e um script no repositorio, e nao uma linha aqui: o
+    # `&&` nao atravessa o parser do Render, que entrega a string inteira ao
+    # `sh` como um unico nome de comando. O script roda as migracoes (pre-deploy
+    # exige plano pago) e respeita o $PORT que a plataforma define.
+    # Invocado via `sh`, e nao como `./scripts/iniciar.sh`: assim nao depende do
+    # bit de execucao, que um clone com `core.fileMode=false` (Windows) perde.
+    dockerCommand: sh ./scripts/iniciar.sh
 
     envVars:
       - key: APP_DEBUG
