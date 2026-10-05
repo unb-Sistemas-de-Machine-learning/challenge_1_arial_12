@@ -550,6 +550,74 @@ Depois volte ao Xcode e dê ⌘R. Não precisa reconverter.
 | **Failed to fetch** só no Safari | o Safari é mais rígido com `localhost`; confirme que o uvicorn está de pé, teste `http://127.0.0.1:8000/health` no próprio Safari e, se for o caso, refaça o build com `WXT_API_BASE_URL=http://127.0.0.1:8000` |
 | `xcrun: error: unable to find utility` | Xcode não instalado ou `xcode-select` apontando para as CLT |
 
+## Deploy no Render (plano gratuito)
+
+O blueprint fica em [`render.yaml`](../render.yaml), na **raiz do repositório** —
+é onde o Render procura o arquivo; o `rootDir` é que aponta para
+`verificador/backend`.
+
+### 1. Banco: Neon, não o Postgres do Render
+
+O Postgres gratuito do Render **expira 30 dias depois de criado** (mais 14 de
+carência, e então os dados são apagados). Use o [Neon](https://neon.com), cujo
+plano gratuito não tem prazo: 0,5 GB e 100 CU-h/mês por projeto, sem cartão.
+
+Crie o projeto e copie a *connection string*. Não precisa editar nada nela: o
+backend normaliza a URL na inicialização (`normalizar_url_do_banco`, em
+`src/core/config/settings.py`), trocando `postgresql://` por
+`postgresql+asyncpg://` e `?sslmode=` por `?ssl=`. Sem essa tradução o asyncpg
+recusa a conexão com `unexpected keyword argument 'sslmode'`.
+
+### 2. Serviço: Blueprint
+
+No painel: **New** → **Blueprint** → aponte para o repositório. O Render lê o
+`render.yaml` e pede os valores marcados `sync: false`:
+
+| Variável | Valor |
+| :--- | :--- |
+| `DATABASE_URL` | a string do Neon, colada como veio |
+| `LLM_API_KEY` | <https://console.groq.com/keys> |
+| `OPENALEX_MAILTO` | e-mail de contato da equipe |
+| `OPENALEX_API_KEY` | <https://openalex.org/rest-api> |
+| `CORS_ORIGINS` | `["*"]` no começo; veja o passo 4 |
+
+Confira quando terminar:
+
+```bash
+curl https://verificador-api.onrender.com/health      # {"ok":true}
+```
+
+### 3. Migrações rodam na subida
+
+`preDeployCommand` exige plano pago, então o `dockerCommand` do blueprint roda
+`alembic upgrade head` antes do uvicorn. É idempotente, e no plano gratuito há
+uma única instância — não há duas migrações concorrentes. Ao subir de plano com
+mais de uma instância, mova isso para um pre-deploy de verdade.
+
+### 4. Extensão apontada para a API
+
+A base do back-end é lida **no build** (ver [Apontar o build para outro
+back-end](#apontar-o-build-para-outro-back-end)):
+
+```bash
+cd verificador/extensao
+WXT_API_BASE_URL=https://verificador-api.onrender.com npm run zip
+```
+
+O ID da extensão só existe depois do primeiro upload na store, e é dele que sai
+a origem do CORS. Por isso a ordem é: subir com `CORS_ORIGINS=["*"]`, publicar a
+extensão, e então trocar para `["chrome-extension://<id>"]` no painel do Render.
+Deixar `["*"]` em produção permite que qualquer página chame a sua API.
+
+### O que o plano gratuito cobra em troca
+
+- **O serviço dorme após 15 min sem tráfego**, e a primeira requisição depois
+  disso leva **30–60 s** só para subir — antes de qualquer LLM. O Neon também
+  escala a zero após 5 min idle. Isso contradiz a baixa latência que o projeto
+  promete: **antes de apresentar, acorde os dois** com um `curl /health`.
+- São **750 horas de instância por mês** por workspace. Um serviço 24/7 usa
+  ~730 h e cabe; dois não cabem.
+
 ## Próxima migração
 
 As próximas etapas substituem o veredicto fixo em `backend/src/api/gateway/routes.py`

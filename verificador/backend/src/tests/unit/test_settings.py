@@ -167,3 +167,32 @@ def test_get_settings_usa_cache_e_permite_sobrescrita_em_teste(monkeypatch) -> N
     second = get_settings()
     assert second is not first
     assert second.database_url.get_secret_value().endswith("/segundo")
+
+
+@pytest.mark.parametrize(
+    ("entrada", "esperada"),
+    [
+        # O que o Neon e o Render entregam ao copiar a string de conexao.
+        (
+            "postgresql://u:s@ep-x.neon.tech/verificador?sslmode=require",
+            "postgresql+asyncpg://u:s@ep-x.neon.tech/verificador?ssl=require",
+        ),
+        # `postgres://` e a forma antiga, ainda usada por alguns paineis.
+        (
+            "postgres://u:s@host/v?sslmode=verify-full",
+            "postgresql+asyncpg://u:s@host/v?ssl=verify-full",
+        ),
+        # Sem TLS na query: so o driver muda.
+        ("postgresql://u:s@host/v", "postgresql+asyncpg://u:s@host/v"),
+        # Driver explicito nao e reescrito -- inclusive o do Compose.
+        (
+            "postgresql+asyncpg://verificador:verificador@db:5432/verificador",
+            "postgresql+asyncpg://verificador:verificador@db:5432/verificador",
+        ),
+    ],
+)
+def test_url_do_banco_chega_normalizada_para_o_asyncpg(
+    entrada: str, esperada: str
+) -> None:
+    settings = Settings(_env_file=None, database_url=entrada)
+    assert settings.database_url.get_secret_value() == esperada
