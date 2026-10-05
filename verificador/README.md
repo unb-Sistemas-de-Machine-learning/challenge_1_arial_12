@@ -581,10 +581,12 @@ No painel: **New** → **Blueprint** → aponte para o repositório. O Render l�
 | `OPENALEX_API_KEY` | <https://openalex.org/rest-api> |
 | `CORS_ORIGINS` | `["*"]` no começo; veja o passo 4 |
 
-Confira quando terminar:
+O subdominio `.onrender.com` e global, entao o nome do `render.yaml` pode ja
+estar tomado: nesse caso o Render acrescenta um sufixo e a URL real so aparece
+no painel. A deste deploy e:
 
 ```bash
-curl https://verificador-api.onrender.com/health      # {"ok":true}
+curl https://verificador-api-y9gl.onrender.com/health      # {"ok":true}
 ```
 
 ### 3. Migrações rodam na subida
@@ -601,7 +603,7 @@ back-end](#apontar-o-build-para-outro-back-end)):
 
 ```bash
 cd verificador/extensao
-WXT_API_BASE_URL=https://verificador-api.onrender.com npm run zip
+WXT_API_BASE_URL=https://verificador-api-y9gl.onrender.com npm run zip
 ```
 
 O ID da extensão só existe depois do primeiro upload na store, e é dele que sai
