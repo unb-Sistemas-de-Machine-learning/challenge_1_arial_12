@@ -410,6 +410,48 @@ async def test_429_e_transitorio_e_traz_o_retry_after() -> None:
 
 
 @pytest.mark.asyncio
+async def test_429_guarda_apenas_diagnostico_seguro_da_groq() -> None:
+    corpo = {"error": {"message": "Rate limit reached (TPM); chave privada"}}
+    prov, _ = provedor(
+        devolver(
+            corpo,
+            429,
+            **{
+                "Retry-After": "7.5",
+                "x-ratelimit-remaining-requests": "93",
+                "x-ratelimit-remaining-tokens": "0",
+                "x-ratelimit-reset-tokens": "7.66s",
+            },
+        )
+    )
+
+    with pytest.raises(FalhaTransitoria) as falha:
+        await completar(prov)
+
+    diagnostico = falha.value.diagnostico_limite
+    assert diagnostico is not None
+    assert diagnostico.tipo == "TPM"
+    assert diagnostico.requisicoes_restantes_dia == 93
+    assert diagnostico.tokens_restantes_minuto == 0
+    assert diagnostico.reinicio_tokens == "7.66s"
+    assert falha.value.retry_after == 7.5
+    assert "chave privada" not in str(falha.value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("valor", ["NaN", "-1", "invalido"])
+async def test_retry_after_invalido_nao_e_usado(valor: str) -> None:
+    prov, _ = provedor(
+        devolver({"error": {"message": "limite"}}, 429, **{"Retry-After": valor})
+    )
+
+    with pytest.raises(FalhaTransitoria) as falha:
+        await completar(prov)
+
+    assert falha.value.retry_after is None
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("status", [500, 502, 503])
 async def test_5xx_e_transitorio(status) -> None:
     prov, _ = provedor(devolver({"error": {"message": "fora"}}, status))
