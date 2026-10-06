@@ -128,8 +128,15 @@ async def gravar_veredito(
                 veredito.estado.value,
                 veredito.model_dump(mode="json", exclude={"id"}),
             )
-    except Exception:
-        logger.exception("Falha ao gravar o veredito; respondendo sem id")
+    except Exception as erro:
+        # Banco fora do ar é previsto: uma linha basta. A pilha só aparece em
+        # modo de depuração, quando alguém está de fato investigando.
+        logger.error(
+            "Falha ao gravar o veredito; respondendo sem id: %s: %s",
+            type(erro).__name__,
+            erro,
+            exc_info=logger.isEnabledFor(logging.DEBUG),
+        )
         return None
     return registrado.id
 

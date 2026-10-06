@@ -32,7 +32,7 @@ Cada tarefa termina com os testes dela passando e o Ruff limpo. A ordem vai de b
 ## Documentação
 
 - [x] 16. Atualizar `verificador/README.md`: o roteiro local exige `LLM_API_KEY` e `OPENALEX_MAILTO`, sai a promessa de circuito "sem IA e sem OpenAlex", e entra uma seção do Pesquisador com `PESQUISADOR_CONCORRENCIA`.
-- [ ] 17. Teste manual com chaves reais: um trecho pelo Postman e um pela extensão, registrando o resultado no PR.
+- [x] 17. Teste manual com chaves reais: um trecho pelo Postman e um pela extensão, registrando o resultado no PR.
 
 ## Antes de abrir o PR de implementação
 
