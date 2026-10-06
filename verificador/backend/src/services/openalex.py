@@ -377,7 +377,7 @@ class ClienteOpenAlex:
         variação que falhou entra em `falhas`, para que quem decide saiba que a
         cobertura ficou menor do que foi pedido.
         """
-        pedidas = _normalizar_buscas(buscas)
+        pedidas = normalizar_buscas(buscas)
         if not pedidas:
             raise ValueError("é preciso pelo menos uma string de busca não vazia")
 
@@ -406,7 +406,7 @@ class ClienteOpenAlex:
         quantos = max(
             1, min(limite if limite is not None else TOP_PADRAO, TOTAL_MAXIMO)
         )
-        trabalhos = _intercalar(listas, quantos)
+        trabalhos = intercalar(listas, quantos)
 
         if len(falhas) == len(pedidas):
             raise OpenAlexIndisponivel(
@@ -521,7 +521,11 @@ class ClienteOpenAlex:
         return self.espera_base_segundos * (2 ** (tentativa - 1))
 
 
-def _intercalar(listas: list[list[Trabalho]], quantos: int) -> list[Trabalho]:
+def intercalar(
+    listas: list[list[Trabalho]],
+    quantos: int,
+    chave: Callable[[Trabalho], str] = lambda trabalho: trabalho.chave,
+) -> list[Trabalho]:
     """Junta os resultados pegando o 1º de cada busca, depois o 2º, e assim vai.
 
     Por posição, e **não** por `relevancia`: o escore da OpenAlex mede o quanto
@@ -532,6 +536,10 @@ def _intercalar(listas: list[list[Trabalho]], quantos: int) -> list[Trabalho]:
 
     A posição, essa sim, é comparável: "primeiro colocado" quer dizer a mesma
     coisa em qualquer busca.
+
+    `chave` decide o que conta como repetido. O padrão é o id da OpenAlex; o
+    Pesquisador passa o DOI, porque preprint e versão publicada têm ids
+    diferentes e o mesmo DOI.
     """
     juntos: list[Trabalho] = []
     vistos: set[str] = set()
@@ -540,16 +548,17 @@ def _intercalar(listas: list[list[Trabalho]], quantos: int) -> list[Trabalho]:
             if posicao >= len(lista) or len(juntos) >= quantos:
                 continue
             trabalho = lista[posicao]
-            if trabalho.chave in vistos:
+            identidade = chave(trabalho)
+            if identidade in vistos:
                 continue
-            vistos.add(trabalho.chave)
+            vistos.add(identidade)
             juntos.append(trabalho)
         if len(juntos) >= quantos:
             break
     return juntos
 
 
-def _normalizar_buscas(buscas: Sequence[str]) -> list[str]:
+def normalizar_buscas(buscas: Sequence[str]) -> list[str]:
     """Limpa a lista antes de gastar requisição: apara, descarta vazia e repetida.
 
     Repetida acontece de verdade: o Triador pode gerar duas variações que, depois

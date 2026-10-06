@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from src.core.config import settings as settings_module
 from src.core.config.settings import Settings
+from src.tests.dubles.esteira import instalar_esteira_sem_rede
 
 MAIN_FILE = Path(__file__).resolve().parents[2] / "main.py"
 
@@ -51,6 +52,7 @@ def test_app_inicia_sem_conectar_ao_banco_e_configura_cors(
     monkeypatch.setattr(settings_module, "get_settings", lambda: custom)
     app = load_app()
     assert app.debug is True
+    instalar_esteira_sem_rede(app, monkeypatch)
 
     with TestClient(app) as client:
         health = client.get("/health")

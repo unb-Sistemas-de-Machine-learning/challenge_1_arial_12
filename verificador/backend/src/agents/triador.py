@@ -386,6 +386,38 @@ EIXOS: tuple[Eixo, ...] = (
 )
 
 
+# A ordem em que o leitor entende a alegação: o que age, o que muda, em que
+# contexto, em quem. Não é a de `CAMPOS`, que é a ordem das palavras na busca.
+ORDEM_DOS_CONCEITOS = ("intervencao", "desfecho", "condicao", "populacao")
+
+
+@dataclass(frozen=True)
+class ExtracaoDoTriador:
+    """O que o Triador entrega à esteira.
+
+    `buscas` vai para o Pesquisador; `conceitos` vai para o campo `termos` do
+    veredito, que a extensão mostra como etiquetas.
+    """
+
+    buscas: list[str]
+    conceitos: list[str]
+
+
+def conceitos_de(canonicos: Mapping[str, str]) -> list[str]:
+    """Os termos canônicos na ordem de leitura, sem vazios e sem repetição.
+
+    Repetição acontece de verdade: em "vacina contra a malária", `malaria`
+    aparece como condição e dentro da intervenção, e cada campo é um conceito.
+    Só o termo idêntico é descartado.
+    """
+    conceitos: list[str] = []
+    for campo in ORDEM_DOS_CONCEITOS:
+        termo = canonicos.get(campo, "")
+        if termo and termo not in conceitos:
+            conceitos.append(termo)
+    return conceitos
+
+
 def canonizar_termos(termos: TermosDeBusca, glossario: Glossario) -> dict[str, str]:
     """Normaliza os quatro campos e aplica o glossário em cada um."""
     return {
@@ -481,10 +513,14 @@ class AgenteTriador:
         self.max_tamanho_variacao = max_tamanho_variacao
         self.glossario = glossario if glossario is not None else glossario_padrao()
 
-    async def extrair_buscas(self, trecho: str) -> list[str]:
-        """As strings de busca do trecho, prontas para `buscar_varias`."""
+    async def extrair(self, trecho: str) -> ExtracaoDoTriador:
+        """As buscas do trecho e os conceitos que o LLM reconheceu nele.
+
+        Nunca levanta. Se o LLM falhar, segue só com o trecho original e sem
+        conceitos: a verificação continua, só com cobertura menor.
+        """
         if not trecho or not trecho.strip():
-            return []
+            return ExtracaoDoTriador(buscas=[], conceitos=[])
 
         try:
             termos = await self.cliente_llm.gerar(
@@ -496,12 +532,22 @@ class AgenteTriador:
             logger.warning(
                 "Falha ao extrair termos, seguindo só com o trecho original: %s", erro
             )
-            return [trecho]
+            return ExtracaoDoTriador(buscas=[trecho], conceitos=[])
         except Exception as erro:
             logger.exception("Erro inesperado no LLM ao extrair termos: %s", erro)
-            return [trecho]
+            return ExtracaoDoTriador(buscas=[trecho], conceitos=[])
 
-        return self.montar_lista(trecho, termos)
+        return ExtracaoDoTriador(
+            buscas=self.montar_lista(trecho, termos),
+            conceitos=conceitos_de(canonizar_termos(termos, self.glossario)),
+        )
+
+    async def extrair_buscas(self, trecho: str) -> list[str]:
+        """As strings de busca do trecho, prontas para `buscar_varias`.
+
+        Mantido para o eval do Triador, que mede só as buscas.
+        """
+        return (await self.extrair(trecho)).buscas
 
     def montar_prompt(self, trecho: str) -> str:
         """O pedido que vai ao modelo: as orientações do arquivo, mais o trecho.

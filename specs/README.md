@@ -18,6 +18,7 @@ escrito nela será inventado.
 | :-- | :--- | :--- | :--- |
 | 002 | [Busca de trabalhos na OpenAlex](002-busca-openalex/spec.md) | implementada | `feature/002-busca-openalex` |
 | 003 | [Camada de acesso a LLM com timeout e degradação](003-camada-llm/spec.md) | em revisão | `feature/003-camada-llm` |
+| 004 | [Agente Juiz: veredicto fundamentado e categorias](004-agente-juiz/spec.md) | em revisão | `feature/019-agente-juiz` |
 | 006 | [Configuração centralizada do backend](006-configuracao-centralizada/spec.md) | implementada | `feature/006-configuracao-centralizada` |
 | 007 | [Inicialização da API pelo Docker Compose](007-app-fastapi-compose/spec.md) | implementada | `feature/007-app-fastapi-compose` |
 | 008 | [Verificação automática de lint e testes em cada PR](008-ci-lint-e-testes/spec.md) | implementada | `feature/008-ci-ruff-pytest` |
@@ -26,6 +27,7 @@ escrito nela será inventado.
 | 011 | [Tratamento de erro padronizado no Gateway](011-erro-padronizado-gateway/spec.md) | implementada | `feature/011-erro-padronizado-gateway` |
 | 012 | [Limite de requisições por origem](012-limite-de-requisicoes-por-origem/spec.md) | implementada | `feature/012-limite-de-requisicoes-por-origem` |
 | 015 | [Painel de veredicto com fonte clicável e estados de erro](015-painel-veredicto-fonte-erros/spec.md) | em revisão | `feature/015-painel-veredicto-fonte-erros` |
+| 022 | [Agente Pesquisador e esteira real do `/verificar`](022-agente-pesquisador/spec.md) | em revisão | `feature/020-agente-pesquisador` |
 
 **Status possíveis:** `rascunho` → `em revisão` → `aprovada` → `implementada`.
 Uma spec que morreu no caminho vira `abandonada`, mas **continua na tabela** e

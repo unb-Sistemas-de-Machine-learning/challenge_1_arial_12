@@ -93,6 +93,9 @@ class Settings(BaseSettings):
     openalex_resultados_por_busca: int = Field(default=10, ge=1)
     openalex_timeout_segundos: float = Field(default=10.0, gt=0)
     openalex_max_tentativas: int = Field(default=3, ge=1, le=5)
+    # Buscas do Pesquisador em andamento ao mesmo tempo. O teto é o número
+    # máximo de buscas de um lote: acima disso o limite não limitaria nada.
+    pesquisador_concorrencia: int = Field(default=5, ge=1, le=10)
     cors_origins: list[str] = Field(default_factory=lambda: ["*"])
     rate_limit_max_requests: int = 30
     rate_limit_window_seconds: int = 60

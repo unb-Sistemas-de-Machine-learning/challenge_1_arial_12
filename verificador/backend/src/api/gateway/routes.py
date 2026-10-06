@@ -1,16 +1,21 @@
 """Rotas públicas: verificação, busca de trabalhos e saúde."""
 
 import logging
-from fastapi import APIRouter, Body, BackgroundTasks, Request
+from fastapi import APIRouter, Body, BackgroundTasks, Depends, Request
 
+from src.agents.juiz import AgenteJuiz
+from src.agents.pesquisador import AgentePesquisador
+from src.agents.triador import AgenteTriador
+from src.api.gateway.dependencias import obter_juiz, obter_pesquisador, obter_triador
 from src.api.gateway.middlewares import ErroGateway
 from src.api.schemas.busca import PedidoDeBusca, RespostaDaBusca
 from src.api.schemas.erro import CodigoErro, Erro
 from src.api.schemas.feedback import FeedbackRequest, FeedbackResponse
-from src.core.database.repositories import registrar_feedback
+from src.core.database.repositories import registrar_feedback, registrar_veredito
 from src.api.schemas.verificacao import Estado, Estudo, Pedido, Veredito
 from src.services.openalex import (
     ErroOpenAlex,
+    OpenAlexIndisponivel,
     OpenAlexRecusouABusca,
     cliente_compartilhado,
 )
@@ -20,17 +25,22 @@ logger = logging.getLogger("verificador.gateway")
 
 router = APIRouter()
 
-_VEREDITO_FIXO = Veredito(
+# Só documentação: é o exemplo de resposta publicado no OpenAPI. A resposta de
+# verdade vem da esteira.
+_EXEMPLO_DE_VEREDITO = Veredito(
     id=1,
     estado=Estado.EXAGERA,
     estudo=Estudo(
-        titulo="(mock) Estudo de exemplo",
+        titulo="Polylaminin promotes regeneration after spinal cord injury",
         ano=2019,
-        doi="10.0000/mock",
+        doi="10.0000/exemplo",
         retratado=False,
     ),
-    termos=["polylaminin", "spinal cord injury", "regeneration"],
-    justificativa="(mock) Resposta de teste — a IA entra na Fase 04.",
+    termos=["polylaminin", "regeneration", "spinal cord injury"],
+    justificativa=(
+        "O estudo observou regeneração em ratos, mas a matéria promete um "
+        "tratamento revolucionário para pessoas."
+    ),
 )
 
 
@@ -45,21 +55,22 @@ def health() -> dict[str, bool]:
     tags=["verificação"],
     responses={
         200: {
-            "description": "Veredicto fixo da Fase 01",
+            "description": "Veredicto da esteira Triador → Pesquisador → Juiz",
             "content": {
                 "application/json": {
-                    "example": _VEREDITO_FIXO.model_dump(mode="json"),
+                    "example": _EXEMPLO_DE_VEREDITO.model_dump(mode="json"),
                 }
             },
         },
         422: {"model": Erro, "description": "Entrada inválida"},
         429: {"model": Erro, "description": "Limite de solicitações excedido"},
-        503: {"model": Erro, "description": "Busca de estudos indisponível"},
+        503: {"model": Erro, "description": "Busca de estudos ou análise indisponível"},
         504: {"model": Erro, "description": "Tempo de análise excedido"},
         500: {"model": Erro, "description": "Erro interno"},
     },
 )
-def verificar(
+async def verificar(
+    request: Request,
     pedido: Pedido = Body(
         openapi_examples={
             "trecho_selecionado": {
@@ -71,10 +82,63 @@ def verificar(
             }
         }
     ),
+    triador: AgenteTriador = Depends(obter_triador),
+    pesquisador: AgentePesquisador = Depends(obter_pesquisador),
+    juiz: AgenteJuiz = Depends(obter_juiz),
 ) -> Veredito:
-    print(f"[verificar] url={pedido.url}")
-    print(f"[verificar] trecho={pedido.trecho!r}")
-    return _VEREDITO_FIXO.model_copy(deep=True)
+    """Triador → Pesquisador → Juiz. A rota só orquestra e grava o resultado.
+
+    Falha do LLM no Triador não aparece aqui: ele segue com o trecho original.
+    Falha do LLM no Juiz sobe como `ErroLLM` e vira `llm_timeout` ou
+    `llm_indisponivel` no handler do gateway.
+    """
+    if not pedido.trecho.strip():
+        # Trecho em branco não tem o que verificar, e não vale uma chamada de LLM.
+        raise ErroGateway(CodigoErro.ENTRADA_INVALIDA)
+
+    extracao = await triador.extrair(pedido.trecho)
+    try:
+        pesquisa = await pesquisador.pesquisar(extracao.buscas)
+    except OpenAlexIndisponivel as erro:
+        logger.warning("Nenhuma busca do Pesquisador funcionou: %s", erro)
+        raise ErroGateway(CodigoErro.OPENALEX_INDISPONIVEL) from erro
+    except ValueError as erro:
+        raise ErroGateway(CodigoErro.ENTRADA_INVALIDA) from erro
+
+    veredito = await juiz.julgar(pedido.trecho, pesquisa.trabalhos)
+    veredito = veredito.model_copy(update={"termos": extracao.conceitos})
+    return veredito.model_copy(
+        update={"id": await gravar_veredito(request, pedido.trecho, veredito)}
+    )
+
+
+async def gravar_veredito(
+    request: Request, trecho: str, veredito: Veredito
+) -> int | None:
+    """O `id` da linha gravada, ou `None` se o banco falhar.
+
+    Falha aqui não vira erro para o leitor: a análise já custou duas chamadas
+    de LLM, e sem `id` a extensão só esconde os botões de feedback.
+    """
+    try:
+        async with request.app.state.fabrica_de_sessoes() as sessao:
+            registrado = await registrar_veredito(
+                sessao,
+                trecho,
+                veredito.estado.value,
+                veredito.model_dump(mode="json", exclude={"id"}),
+            )
+    except Exception as erro:
+        # Banco fora do ar é previsto: uma linha basta. A pilha só aparece em
+        # modo de depuração, quando alguém está de fato investigando.
+        logger.error(
+            "Falha ao gravar o veredito; respondendo sem id: %s: %s",
+            type(erro).__name__,
+            erro,
+            exc_info=logger.isEnabledFor(logging.DEBUG),
+        )
+        return None
+    return registrado.id
 
 
 @router.post(

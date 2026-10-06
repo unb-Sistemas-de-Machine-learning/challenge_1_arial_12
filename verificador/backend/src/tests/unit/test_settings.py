@@ -100,6 +100,26 @@ def test_ajustes_da_openalex_fora_da_faixa_falham(invalido: dict) -> None:
         Settings(_env_file=None, database_url="postgresql+asyncpg://db/v", **invalido)
 
 
+def test_concorrencia_do_pesquisador_tem_padrao_e_faixa() -> None:
+    padrao = Settings(_env_file=None, database_url="postgresql+asyncpg://db/v")
+    assert padrao.pesquisador_concorrencia == 5
+
+    ajustado = Settings(
+        _env_file=None,
+        database_url="postgresql+asyncpg://db/v",
+        pesquisador_concorrencia="2",
+    )
+    assert ajustado.pesquisador_concorrencia == 2
+
+    for invalido in (0, 11):
+        with pytest.raises(ValidationError):
+            Settings(
+                _env_file=None,
+                database_url="postgresql+asyncpg://db/v",
+                pesquisador_concorrencia=invalido,
+            )
+
+
 @pytest.mark.parametrize("database_url", [None, "", "   "])
 def test_database_url_ausente_ou_vazia_falha(database_url: str | None) -> None:
     values = {} if database_url is None else {"database_url": database_url}

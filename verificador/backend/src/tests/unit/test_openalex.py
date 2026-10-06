@@ -24,6 +24,7 @@ from src.services.openalex import (
     Trabalho,
     encurtar_doi,
     encurtar_id,
+    intercalar,
     remontar_abstract,
 )
 
@@ -824,6 +825,33 @@ async def test_a_intercalacao_nao_repete_o_que_as_duas_acharam() -> None:
     resultado = await bancada.cliente.buscar_varias(["a", "b"])
 
     assert [t.id for t in resultado.trabalhos] == ["X", "A2", "B2"]
+
+
+def test_intercalar_aceita_outra_chave_de_repeticao() -> None:
+    """O Pesquisador desduplica por DOI: ids diferentes, mesmo artigo."""
+
+    def trabalho(identificador: str, doi: str | None) -> Trabalho:
+        return Trabalho(
+            id=identificador,
+            titulo=identificador,
+            ano=2020,
+            doi=doi,
+            retratado=False,
+            abstract=None,
+            relevancia=None,
+            citacoes=None,
+        )
+
+    listas = [
+        [trabalho("W1", "10.1/x"), trabalho("W2", None)],
+        [trabalho("W9", "10.1/x"), trabalho("W3", None)],
+    ]
+
+    pelo_id = intercalar(listas, 10)
+    pelo_doi = intercalar(listas, 10, chave=lambda t: t.doi or t.id or "")
+
+    assert [t.id for t in pelo_id] == ["W1", "W9", "W2", "W3"]
+    assert [t.id for t in pelo_doi] == ["W1", "W2", "W3"]
 
 
 @pytest.mark.asyncio
