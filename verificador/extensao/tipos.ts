@@ -23,6 +23,7 @@ export type CodigoErroApi =
   | "limite_excedido"
   | "openalex_indisponivel"
   | "busca_recusada"
+  | "triagem_indisponivel"
   | "llm_timeout"
   | "llm_indisponivel"
   | "recurso_nao_encontrado"

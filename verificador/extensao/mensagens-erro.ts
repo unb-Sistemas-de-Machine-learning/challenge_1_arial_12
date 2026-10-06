@@ -9,6 +9,10 @@ export const MENSAGENS_ERRO = {
   // Sem "tente mais tarde": a busca foi recusada, e repetir a mesma dá no
   // mesmo. O que pode mudar o resultado é selecionar outro trecho.
   busca_recusada: "Não foi possível buscar estudos para este trecho.",
+  // A triagem não rodou, então nada foi apurado. A mensagem não pode
+  // parecer um resultado: "nada encontrado" aqui seria mentira.
+  triagem_indisponivel:
+    "Não foi possível preparar a busca agora. Tente novamente em instantes.",
   llm_timeout: "A análise demorou demais. Tente novamente.",
   llm_indisponivel: "A análise está indisponível. Tente novamente mais tarde.",
   recurso_nao_encontrado: "Serviço não encontrado.",

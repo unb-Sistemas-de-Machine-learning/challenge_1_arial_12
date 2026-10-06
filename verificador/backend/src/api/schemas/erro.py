@@ -10,6 +10,7 @@ class CodigoErro(str, Enum):
     LIMITE_EXCEDIDO = "limite_excedido"
     OPENALEX_INDISPONIVEL = "openalex_indisponivel"
     BUSCA_RECUSADA = "busca_recusada"
+    TRIAGEM_INDISPONIVEL = "triagem_indisponivel"
     LLM_TIMEOUT = "llm_timeout"
     LLM_INDISPONIVEL = "llm_indisponivel"
     RECURSO_NAO_ENCONTRADO = "recurso_nao_encontrado"

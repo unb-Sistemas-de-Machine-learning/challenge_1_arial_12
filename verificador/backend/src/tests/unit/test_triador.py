@@ -15,6 +15,7 @@ cumprir está na última seção.
 import pytest
 
 from src.agents import orientacoes
+from src.agents.orientacoes import ABERTURA_INTERNA
 from src.agents.triador import (
     EIXOS,
     AgenteTriador,
@@ -547,6 +548,35 @@ def test_o_prompt_nao_leva_o_cabecalho_de_metadados() -> None:
     assert documento.versao == documento.metadados["versao"]
     assert not documento.corpo.startswith("---")
     assert "description:" not in documento.corpo.splitlines()[0]
+
+
+def test_o_prompt_nao_leva_os_blocos_internos() -> None:
+    """A prosa de manutenção fica no arquivo e fora da chamada.
+
+    No plano gratuito a janela é de 8 mil tokens por minuto para as duas
+    chamadas da verificação: o que viaja em toda chamada sem mudar a resposta
+    sai do orçamento da verificação seguinte.
+    """
+    documento = orientacoes.ler("triador/ORIENTACOES.md")
+
+    assert "Por que o trabalho é partido assim" in documento.corpo
+    assert "Por que o trabalho é partido assim" not in documento.prompt
+    assert "## Referências" in documento.corpo
+    assert "## Referências" not in documento.prompt
+    # As regras continuam todas lá.
+    assert "## Regras de extração" in documento.prompt
+    assert "## O erro inaceitável" in documento.prompt
+    assert ABERTURA_INTERNA not in documento.prompt
+    assert len(documento.prompt) < len(documento.corpo)
+
+
+def test_os_exemplos_fora_do_prompt_ficam_no_arquivo() -> None:
+    """Decisão reversível: o exemplo retirado fica documentado com o motivo."""
+    documento = orientacoes.ler("triador/referencias/exemplos.md")
+
+    assert "Oxycontin" in documento.corpo
+    assert "Oxycontin" not in documento.prompt
+    assert "O par que sustenta a busca" in documento.prompt
 
 
 # --- O arquivo de verdade -----------------------------------------------------

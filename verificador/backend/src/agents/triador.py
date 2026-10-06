@@ -397,10 +397,16 @@ class ExtracaoDoTriador:
 
     `buscas` vai para o Pesquisador; `conceitos` vai para o campo `termos` do
     veredito, que a extensão mostra como etiquetas.
+
+    `degradada` diz que o modelo não respondeu e não houve extração: as buscas
+    são o trecho cru, em português, e não a tradução para o jargão da
+    literatura. A diferença importa porque muda o que a resposta significa —
+    ver `AgenteTriador.extrair`.
     """
 
     buscas: list[str]
     conceitos: list[str]
+    degradada: bool = False
 
 
 def conceitos_de(canonicos: Mapping[str, str]) -> list[str]:
@@ -516,8 +522,20 @@ class AgenteTriador:
     async def extrair(self, trecho: str) -> ExtracaoDoTriador:
         """As buscas do trecho e os conceitos que o LLM reconheceu nele.
 
-        Nunca levanta. Se o LLM falhar, segue só com o trecho original e sem
-        conceitos: a verificação continua, só com cobertura menor.
+        Nunca levanta. Quando o LLM falha, devolve `degradada=True` com o trecho
+        cru como única busca — e quem orquestra decide o que fazer com isso.
+
+        Degradar não é o mesmo que buscar menos. A busca da OpenAlex exige todas
+        as palavras da string no título ou no abstract do trabalho, então prosa
+        em português quase sempre devolve zero: medido, "A suplementação de
+        vitamina D reduz o risco de infecções respiratórias agudas." casa com 0
+        trabalhos, e `vitamin d supplementation acute respiratory infection`
+        casa com 799. Sem tradução não há busca — há uma requisição que volta
+        vazia, e um Juiz sem nada para julgar.
+
+        Às vezes o trecho cru acha algo, porque a OpenAlex também indexa
+        periódico brasileiro com abstract em português. Isso é sorte, não
+        projeto, e não muda o que `degradada` significa: a esteira não rodou.
         """
         if not trecho or not trecho.strip():
             return ExtracaoDoTriador(buscas=[], conceitos=[])
@@ -529,13 +547,11 @@ class AgenteTriador:
                 sistema=SISTEMA,
             )
         except ErroLLM as erro:
-            logger.warning(
-                "Falha ao extrair termos, seguindo só com o trecho original: %s", erro
-            )
-            return ExtracaoDoTriador(buscas=[trecho], conceitos=[])
+            logger.warning("Falha ao extrair termos; triagem degradada: %s", erro)
+            return ExtracaoDoTriador(buscas=[trecho], conceitos=[], degradada=True)
         except Exception as erro:
             logger.exception("Erro inesperado no LLM ao extrair termos: %s", erro)
-            return ExtracaoDoTriador(buscas=[trecho], conceitos=[])
+            return ExtracaoDoTriador(buscas=[trecho], conceitos=[], degradada=True)
 
         return ExtracaoDoTriador(
             buscas=self.montar_lista(trecho, termos),
@@ -556,11 +572,15 @@ class AgenteTriador:
         (conceito e termo canônico): a coluna de variantes e o procedimento de
         manutenção são para quem edita o arquivo, e mandá-los dobraria o tamanho
         do prompt sem mudar a resposta.
+
+        Os outros dois arquivos entram por `prompt`, e não por `corpo`: a prosa
+        que explica à equipe por que uma regra existe fica fora da chamada. Ver
+        o bloco interno em `src/agents/orientacoes/__init__.py`.
         """
         return MOLDE_DO_PROMPT.format(
-            orientacoes=orientacoes.ler(ARQUIVO_DE_ORIENTACOES).corpo,
+            orientacoes=orientacoes.ler(ARQUIVO_DE_ORIENTACOES).prompt,
             glossario=self._glossario_para_o_prompt(),
-            exemplos=orientacoes.ler(ARQUIVO_DE_EXEMPLOS).corpo,
+            exemplos=orientacoes.ler(ARQUIVO_DE_EXEMPLOS).prompt,
             trecho=trecho.strip(),
         )
 

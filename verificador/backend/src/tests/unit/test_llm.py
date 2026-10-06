@@ -20,6 +20,7 @@ from src.core.config.settings import Settings
 from src.services import llm
 from src.services.llm import (
     ClienteLLM,
+    DiagnosticoDeLimite,
     FalhaTransitoria,
     LLMIndisponivel,
     LLMRecusouOPedido,
@@ -257,6 +258,45 @@ async def test_falha_tambem_gera_linha_de_log(caplog, passo, erro, resultado) ->
     [registro] = [r for r in caplog.records if r.name == "verificador.llm"]
     assert registro.levelno == logging.WARNING
     assert f"resultado={resultado}" in registro.getMessage()
+
+
+@pytest.mark.asyncio
+async def test_log_diz_qual_limite_barrou_a_chamada(caplog) -> None:
+    """Sem isto o log diz só "indisponivel", e três causas ficam iguais.
+
+    Janela de tokens por minuto, cota diária esgotada e provedor fora do ar
+    levam a ações diferentes, e quem lê o log precisa saber qual foi.
+    """
+    caplog.set_level(logging.INFO, logger="verificador.llm")
+    diagnostico = DiagnosticoDeLimite(
+        tipo="TPM", tokens_restantes_minuto=0, reinicio_tokens="7.66s"
+    )
+    cliente, _ = cliente_com(
+        DubleLLM(FalhaTransitoria("429", diagnostico_limite=diagnostico))
+    )
+
+    with pytest.raises(LLMIndisponivel):
+        await cliente.gerar("x", Variacoes)
+
+    [registro] = [r for r in caplog.records if r.name == "verificador.llm"]
+    mensagem = registro.getMessage()
+    assert "limite_tipo=TPM" in mensagem
+    assert "tokens_restantes_min=0" in mensagem
+    assert "reinicio_tokens=7.66s" in mensagem
+    # Campo sem valor não entra: `=None` em toda linha treina o leitor a
+    # ignorar justamente o campo que importa quando ele aparece.
+    assert "req_restantes_dia" not in mensagem
+
+
+@pytest.mark.asyncio
+async def test_log_sem_limite_nao_ganha_campos_vazios(caplog) -> None:
+    caplog.set_level(logging.INFO, logger="verificador.llm")
+    cliente, _ = cliente_com(DubleLLM(VALIDA))
+
+    await cliente.gerar("x", Variacoes)
+
+    [registro] = [r for r in caplog.records if r.name == "verificador.llm"]
+    assert "limite_tipo" not in registro.getMessage()
 
 
 # --- Provedor real, com transporte dublê --------------------------------------

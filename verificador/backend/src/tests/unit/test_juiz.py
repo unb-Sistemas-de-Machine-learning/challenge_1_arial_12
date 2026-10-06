@@ -5,8 +5,11 @@ import pytest
 from src.agents.juiz import (
     ARQUIVO_DE_ORIENTACOES,
     JUSTIFICATIVA_SEM_EVIDENCIA,
+    MARCA_DE_CORTE,
+    MAX_ABSTRACT,
     MAX_JUSTIFICATIVA,
     AgenteJuiz,
+    encurtar_abstract,
     normalizar_doi,
 )
 from src.agents import orientacoes
@@ -20,6 +23,12 @@ ABSTRACT = "Em adultos, a intervenção mostrou melhora moderada no desfecho med
 JUSTIFICATIVA = (
     f"O estudo com DOI {DOI} mostra melhora moderada no desfecho, "
     "o que sustenta a alegação limitada a adultos."
+)
+# Sem DOI no texto: serve a qualquer estudo da entrada, e a conferência de
+# citação não amarra o caso ao DOI do ajudante `trabalho()`.
+SEM_DOI = (
+    "O estudo recebido mostra melhora moderada no desfecho medido em adultos, "
+    "o que sustenta a alegação."
 )
 
 
@@ -252,6 +261,11 @@ async def test_falha_persistente_levanta_erro_padronizavel() -> None:
 
 @pytest.mark.asyncio
 async def test_fonte_retratada_nao_pode_sustentar_mesmo_com_outra_fonte() -> None:
+    """O retratado nem chega ao modelo, então nem pode ser escolhido.
+
+    A primeira resposta do dublê escolhe o DOI do retratado, que não está na
+    entrada do modelo: a conferência recusa e a segunda tentativa decide.
+    """
     outro = trabalho(doi="10.0000/eval-2", retratado=False)
     agente, duble = juiz(
         resposta(),
@@ -267,6 +281,65 @@ async def test_fonte_retratada_nao_pode_sustentar_mesmo_com_outra_fonte() -> Non
 
     assert veredito.estado == Estado.NADA_ENCONTRADO
     assert len(duble.chamadas) == 2
+    assert DOI not in duble.chamadas[0]["prompt"]
+
+
+@pytest.mark.asyncio
+async def test_retratado_nao_ocupa_vaga_entre_os_candidatos() -> None:
+    """Com três vagas, uma gasta num retratado é o abstract que decidiria."""
+    bons = [
+        trabalho(
+            doi=f"10.0000/bom-{numero}", abstract=f"Resultado {numero}. {ABSTRACT}"
+        )
+        for numero in range(1, 4)
+    ]
+    agente, duble = juiz(resposta(doi="10.0000/bom-1", justificativa=SEM_DOI))
+
+    await agente.julgar("Alegação", [trabalho(retratado=True), *bons])
+
+    prompt = duble.chamadas[0]["prompt"]
+    assert DOI not in prompt
+    for bom in bons:
+        assert bom.doi in prompt
+
+
+@pytest.mark.asyncio
+async def test_o_prompt_leva_no_maximo_tres_abstracts() -> None:
+    """O quarto em diante custa token certo e contribui pouco."""
+    muitos = [
+        trabalho(
+            doi=f"10.0000/bom-{numero}", abstract=f"Resultado {numero}. {ABSTRACT}"
+        )
+        for numero in range(1, 6)
+    ]
+    agente, duble = juiz(resposta(doi="10.0000/bom-1", justificativa=SEM_DOI))
+
+    await agente.julgar("Alegação", muitos)
+
+    prompt = duble.chamadas[0]["prompt"]
+    assert [t.doi for t in muitos if t.doi in prompt] == [
+        "10.0000/bom-1",
+        "10.0000/bom-2",
+        "10.0000/bom-3",
+    ]
+
+
+def test_abstract_longo_e_cortado_na_fronteira_de_palavra() -> None:
+    inteiro = "palavra " * 400
+    cortado = encurtar_abstract(inteiro)
+
+    assert cortado is not None
+    assert len(cortado) <= MAX_ABSTRACT + len(MARCA_DE_CORTE)
+    assert cortado.endswith(MARCA_DE_CORTE)
+    # Prefixo literal do original, que é o que mantém honesta a conferência da
+    # citação em `_trecho_literal`.
+    assert inteiro.startswith(cortado[: -len(MARCA_DE_CORTE)].rstrip())
+
+
+def test_abstract_curto_passa_intacto() -> None:
+    assert encurtar_abstract(ABSTRACT) == ABSTRACT
+    assert encurtar_abstract(None) is None
+    assert encurtar_abstract("") == ""
 
 
 @pytest.mark.asyncio

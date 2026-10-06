@@ -121,6 +121,15 @@ Erros HTTP retornam `{"codigo":"...","mensagem":"..."}`. O cabeçalho
 ao investigar uma falha. A extensão escolhe o texto exibido pelo `codigo`, sem
 mostrar detalhes técnicos da resposta.
 
+`triagem_indisponivel` diz que o Triador não traduziu o trecho, e por isso não
+houve busca nem veredito. É o único erro além de `falha_rede` em que o painel
+oferece **Tentar novamente**: a causa quase sempre é a janela de tokens do
+provedor de LLM, e a mesma seleção um minuto depois funciona. O que ele
+substitui é pior do que ele: antes a esteira seguia com o trecho cru em
+português, não achava nada — prosa em português casa com quase nada na
+OpenAlex — e respondia `nada_encontrado`, que o leitor lê como "não existe
+estudo" quando o que houve foi "não consegui procurar".
+
 `openalex_indisponivel` e `busca_recusada` são vizinhos e não se confundem: o
 primeiro é a OpenAlex fora do ar ou cortando tráfego, e esperar resolve; o
 segundo é ela no ar recusando a consulta (`4xx`), e repetir dá no mesmo. Por
@@ -133,6 +142,7 @@ oferece **Tentar novamente**.
 | 429 | `limite_excedido` | Muitas solicitações. Aguarde um pouco e tente novamente. |
 | 503 | `openalex_indisponivel` | A busca de estudos está indisponível. Tente novamente mais tarde. |
 | 502 | `busca_recusada` | Não foi possível buscar estudos para este trecho. |
+| 503 | `triagem_indisponivel` | Não foi possível preparar a busca agora. Tente novamente em instantes. |
 | 504 | `llm_timeout` | A análise demorou demais. Tente novamente. |
 | 503 | `llm_indisponivel` | A análise está indisponível. Tente novamente mais tarde. |
 | 404 | `recurso_nao_encontrado` | Serviço não encontrado. |
@@ -272,7 +282,8 @@ informa nos dados seguros disponíveis.
 1. **Triador** ([`triador.py`](backend/src/agents/triador.py)) — gera as buscas e
    os conceitos do trecho. Os conceitos (intervenção, desfecho, condição,
    população) vão para o campo `termos` do veredito, que a extensão mostra como
-   etiquetas. Se o LLM falhar, segue só com o trecho original e `termos` vazio.
+   etiquetas. Se o LLM falhar, a verificação para aqui com
+   `503 triagem_indisponivel`: sem tradução não há busca que preste.
 2. **Pesquisador** ([`pesquisador.py`](backend/src/agents/pesquisador.py)) — sem
    LLM. Para cada busca, consulta o cache e, se não houver, a OpenAlex; as
    buscas externas rodam em paralelo, no máximo `PESQUISADOR_CONCORRENCIA` (padrão
@@ -282,7 +293,11 @@ informa nos dados seguros disponíveis.
    todas foram recusadas pela OpenAlex em vez de falharem por indisponibilidade.
    Antes de montar o filtro, cada busca é saneada: vírgula e `|` viram espaço,
    porque a OpenAlex os lê como sintaxe de filtro e não como texto.
-3. **Juiz** — descarta trabalhos sem abstract ou DOI e decide o veredito.
+3. **Juiz** — descarta trabalhos sem abstract, sem DOI ou retratados e decide o
+   veredito com os três primeiros que sobrarem, com o abstract cortado em 900
+   caracteres. Os dois tetos são orçamento de token: no plano gratuito da Groq
+   a janela é de 8 mil tokens por minuto para as duas chamadas de LLM da
+   verificação.
 
 O veredito é gravado na tabela `veredito`, e o `id` devolvido é o que
 `POST /feedback` usa. Se a gravação falhar, o leitor recebe o mesmo veredito com

@@ -123,14 +123,14 @@ sequenceDiagram
 
 ### 2.3 Agente Triador (feature 018, já na main)
 
-O Triador transforma o trecho em português em strings de busca em inglês. O LLM só extrai os conceitos; o resto é determinístico (glossário + eixos de combinação). Se o LLM falhar, o Triador segue com o trecho original em vez de quebrar.
+O Triador transforma o trecho em português em strings de busca em inglês. O LLM só extrai os conceitos; o resto é determinístico (glossário + eixos de combinação). Se o LLM falhar, o Triador marca a extração como degradada e a rota recusa a verificação com `503 triagem_indisponivel`: sem tradução não há busca, porque prosa em português casa com quase nada na OpenAlex.
 
 ```mermaid
 flowchart TD
     A["trecho da matéria"] --> B{"trecho vazio?"}
     B -- sim --> Z1["lista vazia"]
     B -- não --> C["LLM extrai 4 campos:<br/>intervenção, desfecho,<br/>condição, população"]
-    C -- "erro do LLM" --> Z2["devolve só o trecho original"]
+    C -- "erro do LLM" --> Z2["extração degradada:<br/>503 triagem_indisponivel"]
     C -- ok --> D["glossário: troca cada termo<br/>pela forma canônica"]
     D --> E["eixos: combina os campos<br/>em strings de busca"]
     E --> F{"busca longa demais<br/>ou repetida?"}
@@ -575,7 +575,7 @@ flowchart TD
     F -- "não, todas recusadas<br/>(4xx da OpenAlex)" --> ERR2["erro busca_recusada<br/>502"]
     F -- "sim, ao menos uma" --> G["junta, remove repetidos"]
     C --> G
-    G --> H["descarta trabalhos<br/>sem abstract ou sem DOI"]
+    G --> H["descarta trabalhos sem abstract,<br/>sem DOI ou retratados;<br/>fica com os 3 primeiros"]
     H --> I{"sobrou algum?"}
     I -- não --> V["lista vazia → Juiz devolve<br/>nada_encontrado sem LLM"]
     I -- sim --> J{"muitos abstracts?"}
@@ -630,6 +630,7 @@ flowchart LR
         r503a["503 llm_indisponivel"]
         r503b["503 openalex_indisponivel"]
         r502["502 busca_recusada"]
+        r503c["503 triagem_indisponivel"]
         r422["422 entrada_invalida"]
         r429["429 limite excedido"]
     end
@@ -642,7 +643,7 @@ flowchart LR
     e6 --> r429
 ```
 
-> O Triador **não** aparece no mapa de propósito: se o LLM falha nele, ele segue só com o trecho original e a esteira continua.
+> O Triador tem o erro próprio `503 triagem_indisponivel`. Ele existe porque a alternativa era pior: a esteira seguia com o trecho cru, não achava nada e respondia `nada_encontrado` — um veredito que ninguém apurou.
 
 ---
 

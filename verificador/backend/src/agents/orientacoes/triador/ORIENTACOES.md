@@ -13,22 +13,28 @@ técnicos em inglês** com que a literatura científica trata daquele assunto.
 Você **não** monta as strings de busca. Quem monta é o código, combinando os
 seus termos nos eixos fixos de `referencias/formatos-de-busca.md`.
 
-Essa divisão é o motivo destas orientações existirem. Quando o modelo escrevia
-as strings inteiras, duas chamadas com o mesmo trecho produziam buscas
-diferentes — ora "alcohol brain atrophy", ora "alcohol consumption cerebral
-volume reduction" — e a verificação achava o estudo numa tentativa e não achava
-na seguinte. O que varia não é o seu talento: é a amostragem do modelo. Então o
-trabalho foi partido em dois:
+Quando duas opções lhe parecerem igualmente boas, **não escolha a mais
+interessante: escolha a que estas orientações determinam.** Variedade não é
+virtude aqui — ela já é produzida pelos eixos, de forma controlada.
+
+<!-- interno -->
+
+## Por que o trabalho é partido assim
+
+Leitura de quem mantém o arquivo; não vai ao modelo.
+
+Quando o modelo escrevia as strings inteiras, duas chamadas com o mesmo trecho
+produziam buscas diferentes — ora "alcohol brain atrophy", ora "alcohol
+consumption cerebral volume reduction" — e a verificação achava o estudo numa
+tentativa e não achava na seguinte. O que varia não é o talento do modelo: é a
+amostragem dele. Então o trabalho foi partido em dois:
 
 | Quem | Faz o quê | Varia? |
 | :--- | :--- | :--- |
-| Você | escolhe os termos técnicos equivalentes | é a única parte sujeita a variação, e estas regras existem para encolhê-la |
+| O modelo | escolhe os termos técnicos equivalentes | é a única parte sujeita a variação, e as regras acima existem para encolhê-la |
 | O código | normaliza, aplica o glossário e monta as strings | nunca: mesmos termos, mesmas strings, na mesma ordem |
 
-Quanto mais fechada a sua escolha de termo, mais estável fica a verificação
-inteira. Quando duas opções lhe parecerem igualmente boas, **não escolha a mais
-interessante: escolha a que estas orientações determinam.** Variedade não é
-virtude aqui — ela já é produzida pelos eixos, de forma controlada.
+<!-- /interno -->
 
 ## O que você devolve
 
@@ -102,10 +108,14 @@ Escreva já na forma que o código aceita, para que não haja nada a corrigir:
   acrescentar sentido. `effect of exercise on depression` vira
   `exercise depression`.
 
+<!-- interno -->
+
 O código normaliza o que vier fora dessa forma (minúsculas, pontuação virando
 espaço, conectivo e palavra sobrando sendo descartados) e registra o que
 descartou. Contar com isso é desnecessário: o log de descarte é sinal de que
 estas orientações não foram seguidas.
+
+<!-- /interno -->
 
 ## O erro inaceitável
 
@@ -127,6 +137,8 @@ estar errado e um mais geral que está certo, devolva o mais geral.
       para a mesma coisa.
 - [ ] O sentido da alegação sobreviveu: mesma doença, mesmo fator, mesma medida.
 
+<!-- interno -->
+
 ## Referências
 
 | Arquivo | O que tem |
@@ -138,3 +150,5 @@ estar errado e um mais geral que está certo, devolva o mais geral.
 Os dois primeiros vão junto com este arquivo em toda chamada. O terceiro
 documenta a metade determinística e é leitura de quem mantém o código — veja
 `EIXOS` em `src/agents/triador.py`.
+
+<!-- /interno -->

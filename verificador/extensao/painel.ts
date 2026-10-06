@@ -44,9 +44,19 @@ export function htmlCarregando(trecho: string): string {
   );
 }
 
+/**
+ * Erros em que repetir resolve, e por isso ganham o botao.
+ *
+ * `triagem_indisponivel` e tipicamente a janela de tokens do provedor de LLM:
+ * a mesma selecao, um minuto depois, costuma funcionar. Nao confundir com
+ * `busca_recusada`, em que repetir da no mesmo -- ver "Erros do gateway" no
+ * README.
+ */
+const REPETIVEIS = new Set(["falha_rede", "triagem_indisponivel"]);
+
 export function htmlErro(codigo: unknown): string {
   const repetir =
-    codigo === "falha_rede"
+    typeof codigo === "string" && REPETIVEIS.has(codigo)
       ? '<button type="button" class="vc-repetir">Tentar novamente</button>'
       : "";
   return (
