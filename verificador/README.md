@@ -1,7 +1,9 @@
-# Verificador Científico — contrato de verificação (spec 010)
+# Verificador Científico
 
-Prova o circuito completo **sem IA e sem OpenAlex**:
-seleção de texto → botão → background → back-end → veredito mock → painel.
+Circuito completo: seleção de texto → botão → background → back-end →
+Triador → Pesquisador (OpenAlex) → Juiz → painel. Desde a spec 022 o
+veredito é calculado de verdade; para rodar `/verificar` localmente, preencha
+`LLM_API_KEY` e `OPENALEX_MAILTO` no `.env` (ver [Como rodar](#como-rodar)).
 
 ```
 content.ts  --runtime.sendMessage-->  background.ts  --fetch-->  FastAPI
@@ -17,7 +19,7 @@ da página visitada — muitos sites bloqueiam requisições a `localhost`.
 ```
 verificador/
 ├── backend/
-│   ├── src/main.py        # aplicação FastAPI: POST /verificar; GET /health
+│   ├── src/main.py        # aplicação FastAPI: POST /verificar, /buscar, /feedback; GET /health
 │   ├── docker-compose.yml # api + db; inicia src.main:app
 │   ├── requirements.txt
 │   └── .venv/             # criado localmente
@@ -83,15 +85,26 @@ Confira isolado, antes de mexer na extensão:
 ```bash
 curl -X POST http://localhost:8000/verificar \
   -H "Content-Type: application/json" \
-  -d '{"trecho":"teste","url":"http://x"}'
+  -d '{"trecho":"Café reduz o risco de câncer de fígado"}'
 ```
 
-Deve voltar o JSON mock. **Só avance quando isso funcionar.**
+Deve voltar um veredito (`sustenta`, `exagera` ou `nada_encontrado`) com a
+justificativa e o estudo usado. A resposta leva alguns segundos: são duas
+chamadas de LLM e as buscas na OpenAlex. **Só avance quando isso funcionar.**
 
 O healthcheck responde em `http://localhost:8000/health` com `{"ok":true}`.
 O backend lê `.env` na inicialização. `DATABASE_URL` precisa estar preenchida,
-mas o healthcheck não conecta ao banco; `LLM_API_KEY` e `OPENALEX_MAILTO` podem ficar
-vazios nesta fase. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
+mas o healthcheck não conecta ao banco. Para `/verificar` funcionar, preencha
+também:
+
+- `LLM_API_KEY` — a chave do Groq é gratuita. Sem ela, `/verificar` responde
+  `503 llm_indisponivel` sempre que encontra estudos para o Juiz analisar;
+- `OPENALEX_MAILTO` — um e-mail de contato. Sem ele, toda busca falha e
+  `/verificar` responde `503 openalex_indisponivel`.
+
+Não existe modo mock: o veredito fixo da Fase 01 saiu com a spec 022. Sem banco
+alcançável, a verificação funciona e o veredito volta com `id = null` — a
+extensão só esconde os botões de feedback. `CORS_ORIGINS` aceita uma lista JSON de origens e, por padrão,
 mantém `['*']` — use isso só em desenvolvimento (`APP_DEBUG=true`); fora dele,
 configure a lista com a origem real da extensão publicada.
 
@@ -122,8 +135,7 @@ mostrar detalhes técnicos da resposta.
 | 500 e demais `5xx` | `erro_interno` | Não foi possível concluir a verificação agora. |
 
 Se não houver resposta HTTP, a extensão mostra uma mensagem local de falha de
-conexão. A rota `/verificar` ainda devolve o veredito mock: nem a busca na
-OpenAlex nem o LLM estão ligados a ela.
+conexão.
 
 ### Camada de LLM (spec 003)
 
@@ -216,8 +228,8 @@ linha nova no glossário — o procedimento está no fim de `glossario.md`.
 [`src/agents/juiz.py`](backend/src/agents/juiz.py) compara a alegação com os
 abstracts recebidos e devolve `sustenta`, `exagera` ou `nada_encontrado` no
 schema da extensão. O DOI e os metadados da fonte são conferidos contra a
-entrada; estudo retratado não pode sustentar a alegação. A rota `/verificar`
-continua mock até a integração da esteira completa.
+entrada; estudo retratado não pode sustentar a alegação. É a última etapa de
+`/verificar` (ver [Agente Pesquisador e esteira](#agente-pesquisador-e-esteira-spec-022)).
 Internamente, o LLM declara primeiro se a evidência é compatível, parcial ou
 ausente; o código rejeita um estado incompatível com essa relação antes de
 montar o veredito.
@@ -246,6 +258,30 @@ reduz a frequência, mas não garante que uma quota diária ou de tokens não se
 atingida. O tipo exato aparece como "não identificado" quando o provedor não o
 informa nos dados seguros disponíveis.
 
+### Agente Pesquisador e esteira (spec 022)
+
+`POST /verificar` encadeia as três etapas, e a rota só orquestra:
+
+1. **Triador** ([`triador.py`](backend/src/agents/triador.py)) — gera as buscas e
+   os conceitos do trecho. Os conceitos (intervenção, desfecho, condição,
+   população) vão para o campo `termos` do veredito, que a extensão mostra como
+   etiquetas. Se o LLM falhar, segue só com o trecho original e `termos` vazio.
+2. **Pesquisador** ([`pesquisador.py`](backend/src/agents/pesquisador.py)) — sem
+   LLM. Para cada busca, consulta o cache e, se não houver, a OpenAlex; as
+   buscas externas rodam em paralelo, no máximo `PESQUISADOR_CONCORRENCIA` (padrão
+   `5`) ao mesmo tempo. Junta tudo intercalando por posição, sem repetir o mesmo
+   DOI, e entrega até 5 trabalhos. Busca que falha só reduz a cobertura; todas
+   falhando viram `503 openalex_indisponivel`.
+3. **Juiz** — descarta trabalhos sem abstract ou DOI e decide o veredito.
+
+O veredito é gravado na tabela `veredito`, e o `id` devolvido é o que
+`POST /feedback` usa. Se a gravação falhar, o leitor recebe o mesmo veredito com
+`id = null`.
+
+O cache ainda não existe: [`cache.py`](backend/src/services/cache.py) define só o
+contrato `CacheDeBuscas` e o padrão `SemCache`. Quem implementar o cache entrega
+a instância ao Pesquisador em `src/api/gateway/dependencias.py`.
+
 ### Busca na OpenAlex (spec 002)
 
 `POST /buscar` recebe uma **lista** de strings de busca e devolve os trabalhos
@@ -253,8 +289,9 @@ numa lista única, sem repetição. Por baixo é
 [`src/services/openalex.py`](backend/src/services/openalex.py): `httpx` sobre a
 API REST da OpenAlex, sem camada de protocolo no meio.
 
-`POST /verificar` **ainda não chama a busca** — continua devolvendo o veredito
-mock até a integração da esteira Triador → busca → Juiz.
+`POST /buscar` é a busca **crua**, para testes manuais (Postman, `/docs`): não
+passa pelo Triador nem pelo Juiz. A esteira de `/verificar` não chama esta rota;
+quem busca por ela é o Pesquisador, por chamada de função.
 
 Cada string vai para a OpenAlex sem alteração, então a sintaxe dela vale: aspas
 para frase exata, `AND`, `OR` e `NOT` em maiúsculas, e parênteses para agrupar.
@@ -398,20 +435,17 @@ funciona em qualquer clone, nos três sistemas — não edite o arquivo à mão.
    aparece logo acima da seleção.
 3. **Clique no botão.** O painel abre no canto inferior direito com o badge
    cinza "VERIFICANDO…" e o trecho selecionado entre aspas.
-4. Em menos de um segundo o painel troca para:
-   - badge laranja **EXAGERA**
-   - justificativa `(mock) Resposta de teste — a IA entra na Fase 04.`
-   - o estudo `(mock) Estudo de exemplo · 2019` e o link **Abrir publicação (DOI: 10.0000/mock)**, que abre `https://doi.org/10.0000/mock` em nova aba
-   - as três tags `polylaminin`, `spinal cord injury`, `regeneration`
-5. **Olhe o terminal 1 (uvicorn).** Deve ter impresso exatamente o trecho que
-   você selecionou:
+4. Em alguns segundos o painel troca para o veredito calculado:
+   - o badge do estado (**SUSTENTA**, **EXAGERA** ou **NADA ENCONTRADO**)
+   - a justificativa em português, escrita pelo Juiz
+   - quando há estudo, o título, o ano e o link **Abrir publicação** para o DOI
+   - as etiquetas com os conceitos que o Triador reconheceu no trecho
+5. **Olhe o terminal 1 (uvicorn).** Deve aparecer a requisição respondida:
    ```
-   [verificar] url=file:///.../pagina-teste.html
-   [verificar] trecho='A polilaminina vai revolucionar...'
    POST /verificar HTTP/1.1" 200 OK
    ```
-   Esse é o teste que realmente importa: prova que o texto atravessou os três
-   processos sem se perder.
+   Um `503` ali quase sempre é `LLM_API_KEY` ou `OPENALEX_MAILTO` vazio no
+   `.env`; o motivo aparece no log logo acima.
 6. **Repita em 2 sites reais** (critério de pronto da fase):
    - a segunda aba, https://pt.wikipedia.org/wiki/Medula_espinhal
    - um portal de notícias (ex.: https://g1.globo.com — abra uma matéria)
@@ -424,10 +458,14 @@ funciona em qualquer clone, nos três sistemas — não edite o arquivo à mão.
 - Confira que o link do DOI abre em outra aba; o painel original permanece aberto.
 - Pare o backend e verifique novamente. O painel deve exibir uma mensagem de conexão em português e o botão **Tentar novamente**, sem mostrar `localhost`, porta ou stack. Reinicie o backend e clique em **Tentar novamente** sem selecionar outro trecho; o mesmo texto deve ser enviado.
 - Para testar o cancelamento, clique em **Verificar** e feche o painel enquanto ele mostra **Verificando…**. A resposta tardia não pode reabrir o painel.
-- Confira os estados **Sustenta**, **Exagera** e **Nada encontrado**, além do aviso **Estudo retratado** e do erro. O backend atual devolve apenas o veredito mock **Exagera**; os outros estados exigem respostas simuladas ou uma integração futura. Não trate o build como evidência de teste visual desses estados.
+- Confira os estados **Sustenta**, **Exagera** e **Nada encontrado**, além do aviso **Estudo retratado** e do erro. Com a esteira real, o estado depende do trecho: escolha alegações diferentes para ver cada um. Não trate o build como evidência de teste visual desses estados.
 - Repita no Chrome e no Firefox; anexe capturas dos três estados e do erro ao PR. Os testes automatizados da apresentação ficam em `extensao/tests/` e podem ser executados com `npm test`.
 
 ## Checklist da Fase 01
+
+> Histórico: este era o critério de pronto da Fase 01, com o veredito mock. Desde
+> a spec 022, `/verificar` usa IA e OpenAlex, e não imprime mais o trecho no log:
+> os itens do log do uvicorn, do veredito mock e de "nada de IA" não valem mais.
 
 - [ ] Selecionar texto faz surgir o botão "Verificar"
 - [ ] Clicar mostra o painel em estado "carregando"
