@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from src.core.config import settings as settings_module
 from src.core.config.settings import Settings
+from src.tests.dubles.esteira import instalar_esteira_sem_rede
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
 
@@ -30,7 +31,9 @@ def test_nova_api_responde_health_e_aplica_cors(monkeypatch) -> None:
         cors_origins=["https://permitida.example"],
     )
     monkeypatch.setattr(settings_module, "get_settings", lambda: custom)
-    with TestClient(load_app("src/main.py")) as client:
+    app = load_app("src/main.py")
+    instalar_esteira_sem_rede(app, monkeypatch)
+    with TestClient(app) as client:
         health = client.get("/health")
         preflight = client.options(
             "/health",

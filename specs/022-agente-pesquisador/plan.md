@@ -17,7 +17,7 @@ O `/verificar` passa a receber Triador, Pesquisador e Juiz por `Depends`, encade
 | `verificador/backend/src/services/openalex.py` | `_intercalar` vira `intercalar` (público, com parâmetro `chave`); `_normalizar_buscas` vira `normalizar_buscas`. Comportamento de `buscar_varias` inalterado |
 | `verificador/backend/src/agents/triador.py` | novo `ExtracaoDoTriador` e método `extrair`; `extrair_buscas` passa a delegar a ele, sem mudar o retorno |
 | `verificador/backend/src/agents/juiz.py` | `normalizar_doi` passa a ser importado pelo Pesquisador (sem mudança de código) |
-| `verificador/backend/src/api/gateway/dependencias.py` | **novo** — `obter_triador`, `obter_pesquisador`, `obter_juiz` |
+| `verificador/backend/src/api/gateway/dependencias.py` | **novo** — `obter_triador`, `obter_pesquisador`, `obter_juiz`, com os clientes de LLM e OpenAlex montados só na primeira chamada |
 | `verificador/backend/src/api/gateway/routes.py` | `/verificar` orquestra a esteira e grava o veredito; saem os `print`. `_VEREDITO_FIXO` deixa de ser resposta e fica só como exemplo do OpenAPI (renomeado para `_EXEMPLO_DE_VEREDITO`). `/buscar` inalterada |
 | `verificador/backend/src/core/config/settings.py` | `pesquisador_concorrencia` (`PESQUISADOR_CONCORRENCIA`, padrão 5, de 1 a 10) |
 | `verificador/backend/.env.example` | a variável nova, comentada |
@@ -27,6 +27,8 @@ O `/verificar` passa a receber Triador, Pesquisador e Juiz por `Depends`, encade
 | `verificador/backend/src/tests/unit/test_openalex.py` | caso de `intercalar` com `chave` personalizada |
 | `verificador/backend/src/tests/integration/test_rotas_verificacao.py` | troca o teste do stub pelos cenários da esteira com dublês |
 | `verificador/backend/src/tests/fixtures/veredito_fase01.json` | removido: só o teste do stub usa |
+| `verificador/backend/src/tests/dubles/esteira.py` | **novo** — esteira sem rede e banco que falha na hora, para os testes que só usam `/verificar` como rota que responde 200 |
+| `verificador/backend/src/tests/integration/test_limite_de_taxa.py`, `test_app_compose.py`, `test_startup_settings.py` | instalam o dublê da esteira |
 
 ## 3. Contratos
 
@@ -97,8 +99,10 @@ async def verificar(
     extracao = await triador.extrair(pedido.trecho)
     try:
         pesquisa = await pesquisador.pesquisar(extracao.buscas)
-    except (OpenAlexIndisponivel, ValueError) as erro:
+    except OpenAlexIndisponivel as erro:
         raise ErroGateway(CodigoErro.OPENALEX_INDISPONIVEL) from erro
+    except ValueError as erro:
+        raise ErroGateway(CodigoErro.ENTRADA_INVALIDA) from erro
     veredito = await juiz.julgar(pedido.trecho, pesquisa.trabalhos)  # ErroLLM -> handler
     veredito = veredito.model_copy(update={"termos": extracao.conceitos})
     return veredito.model_copy(update={"id": await gravar(request, pedido.trecho, veredito)})
@@ -119,7 +123,8 @@ O contrato HTTP de `/verificar`, `/buscar` e `/feedback` **não muda**.
 | Tornar `intercalar` e `normalizar_buscas` públicas | Copiar a lógica para o Pesquisador | Uma regra de intercalação só, já documentada e testada |
 | Erro no cache (`obter` ou `guardar`) vira "sem cache" para aquela busca, com log | Propagar o erro | Cache é otimização: nunca pode derrubar uma verificação |
 | Falha de configuração da OpenAlex (`OPENALEX_MAILTO` vazio) vira `openalex_indisponivel` | 500 | Mesmo tratamento que `/buscar` já dá |
-| LLM por `Depends(obter_cliente_llm)`, já existente | Montar o cliente dentro da rota | Reaproveita a costura de teste (`DubleLLM`) e a tradução de chave ausente para `llm_indisponivel` |
+| Clientes de LLM e OpenAlex montados na primeira chamada (`_LLMSobDemanda`, `_OpenAlexSobDemanda`), respeitando `dependency_overrides[obter_cliente_llm]` | `Depends(obter_cliente_llm)` direto, como previsto | O FastAPI resolve dependências antes de validar o corpo: com a dependência levantando, pedido sem `trecho` respondia 503 em vez de 422 quando faltava chave. A costura de teste com `DubleLLM` continua a mesma |
+| Trecho em branco responde 422 antes de qualquer etapa | Deixar o Triador devolver lista vazia e o Pesquisador recusar | Não gasta LLM com pedido sem conteúdo |
 | Triador, Pesquisador e Juiz por `Depends` em `dependencias.py` | Instanciar na rota | Teste de integração troca cada etapa com `app.dependency_overrides` |
 | `extrair` novo no Triador, `extrair_buscas` mantido | Mudar o retorno de `extrair_buscas` | `scripts/eval_triador.py` e os testes atuais continuam valendo sem mudança |
 | Ordem dos conceitos: intervenção, desfecho, condição, população | A ordem de `CAMPOS` (condição primeiro) | É a ordem em que o leitor entende a alegação: o que age, o que muda, onde, em quem |
@@ -150,6 +155,7 @@ O contrato HTTP de `/verificar`, `/buscar` e `/feedback` **não muda**.
 
 ## 6. Riscos
 
+- **Banco fora do ar deixa a resposta lenta.** A gravação espera o timeout de conexão do driver antes de desistir e devolver `id = null` (nos testes, uns 5 s com host inexistente). Se incomodar, a correção é um timeout de conexão curto em `criar_motor`, fora desta spec.
 - **Tempo de resposta alto.** Sem teto (decisão da spec), uma verificação pode passar de 30 s com repetições da OpenAlex e do Juiz. Se a equipe sentir na extensão, a próxima spec define um orçamento total.
 - **Quota do Groq.** Cada verificação faz duas chamadas de LLM, contra uma por caso nos evals. Testes manuais repetidos podem bater no 429; o erro chega como `llm_indisponivel`.
 - **Poucos abstracts nos 5 trabalhos.** O Juiz pode responder `nada_encontrado` mais do que deveria. A decisão de manter 5 foi consciente; o número é um parâmetro do Pesquisador e pode subir sem mudar código da rota.

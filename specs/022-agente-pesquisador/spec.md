@@ -53,7 +53,8 @@ Esta spec cria o Pesquisador e liga a esteira **Triador → Pesquisador → Juiz
 14. O campo `termos` do veredito traz os **conceitos** que o Triador extraiu do trecho (intervenção, desfecho, condição e população, já na forma canônica do glossário), um por item, sem vazios e sem repetição. Quando o LLM do Triador falha, `termos` vem vazio e a extensão esconde a seção.
 15. O Juiz recebe no máximo **5 trabalhos**, o padrão atual do cliente OpenAlex (`TOP_PADRAO`). O valor pode ser aumentado depois, se a qualidade pedir.
 16. Não há teto de tempo para a verificação inteira: cada etapa segue com o próprio timeout já configurado (LLM e OpenAlex).
-17. O `verificador/README.md` informa que testar `POST /verificar` exige `LLM_API_KEY` e `OPENALEX_MAILTO` preenchidos no `.env`, e o roteiro local deixa de prometer o circuito "sem IA e sem OpenAlex". Não existe modo mock: sem chave, `/verificar` responde `llm_indisponivel` (503).
+17. O `verificador/README.md` informa que testar `POST /verificar` exige `LLM_API_KEY` e `OPENALEX_MAILTO` preenchidos no `.env`, e o roteiro local deixa de prometer o circuito "sem IA e sem OpenAlex". Não existe modo mock: sem chave, o Triador degrada e `/verificar` responde `llm_indisponivel` (503) sempre que houver trabalhos para o Juiz; sem trabalhos, responde `nada_encontrado`, porque o Juiz não chega a usar o LLM.
+18. Trecho vazio ou só com espaços responde `entrada_invalida` (422) sem chamar LLM nem OpenAlex. Pedido estruturalmente inválido continua respondendo 422 mesmo com `LLM_API_KEY` ou `OPENALEX_MAILTO` ausentes: a validação do corpo vem antes de qualquer cliente externo ser montado.
 
 ## 4. Fora de escopo
 
@@ -96,3 +97,4 @@ O Pesquisador **não usa LLM**. A esteira usa os LLMs do Triador e do Juiz sem a
 | 2026-10-05 | Criação da spec a partir da issue #20; o contrato fica numa spec própria porque a `004` virou a spec do Juiz |
 | 2026-10-05 | Decide `termos` (conceitos do Triador), limite de 5 trabalhos, ausência de teto de tempo, README sem modo mock e `id = null` quando a gravação falha; spec vai para revisão |
 | 2026-10-05 | Critério 17 simplificado no plano: sem chave, `/verificar` responde `llm_indisponivel` sempre, pela dependência `obter_cliente_llm` que já existe |
+| 2026-10-05 | Implementação: o critério 17 volta ao texto original (503 só quando há trabalhos), porque resolver o LLM na dependência fazia pedido inválido responder 503 em vez de 422; os clientes passam a ser montados na primeira chamada. Entra o critério 18 (trecho em branco é 422) |

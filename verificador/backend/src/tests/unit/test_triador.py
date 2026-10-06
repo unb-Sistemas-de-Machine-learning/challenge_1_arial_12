@@ -442,6 +442,81 @@ async def test_trecho_vazio_nao_gasta_chamada(glossario, sem_espera) -> None:
     assert duble.chamadas == []
 
 
+# --- Conceitos para o campo `termos` do veredito --------------------------------
+
+
+@pytest.mark.asyncio
+async def test_extrair_devolve_buscas_e_conceitos_na_ordem_de_leitura(
+    glossario, sem_espera
+) -> None:
+    triador = agente(
+        {
+            "condicao": "Depression",
+            "intervencao": "alcohol intake",
+            "desfecho": "brain shrinkage",
+            "populacao": "older adults",
+        },
+        glossario=glossario,
+        sem_espera=sem_espera,
+    )
+
+    extracao = await triador.extrair(TRECHO)
+
+    # Glossário aplicado: as variantes viram o termo canônico.
+    assert extracao.conceitos == [
+        "alcohol consumption",
+        "brain atrophy",
+        "depression",
+        "older adults",
+    ]
+    assert extracao.buscas[0] == TRECHO
+
+
+@pytest.mark.asyncio
+async def test_conceitos_sem_vazios_e_sem_repeticao(glossario, sem_espera) -> None:
+    triador = agente(
+        {
+            "intervencao": "malaria",
+            "desfecho": "",
+            "condicao": "malaria",
+            "populacao": "children",
+        },
+        glossario=glossario,
+        sem_espera=sem_espera,
+    )
+
+    assert (await triador.extrair(TRECHO)).conceitos == ["malaria", "children"]
+
+
+@pytest.mark.asyncio
+async def test_extrair_buscas_e_as_buscas_de_extrair(glossario, sem_espera) -> None:
+    resposta = {
+        "intervencao": "alcohol consumption",
+        "desfecho": "brain atrophy",
+        "condicao": "",
+        "populacao": "",
+    }
+    um = agente(resposta, glossario=glossario, sem_espera=sem_espera)
+    outro = agente(resposta, glossario=glossario, sem_espera=sem_espera)
+
+    assert (await um.extrair(TRECHO)).buscas == await outro.extrair_buscas(TRECHO)
+
+
+@pytest.mark.asyncio
+async def test_llm_falhando_devolve_trecho_e_nenhum_conceito(
+    glossario, sem_espera
+) -> None:
+    cliente = ClienteLLM(
+        DubleLLM(FalhaTransitoria("503")), dormir=sem_espera, max_tentativas=1
+    )
+    triador = AgenteTriador(cliente, glossario=glossario)
+
+    extracao = await triador.extrair(TRECHO)
+
+    assert extracao.buscas == [TRECHO]
+    assert extracao.conceitos == []
+
+
 # --- O prompt -----------------------------------------------------------------
 
 

@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from src.core.config import settings as settings_module
 from src.core.config.settings import Settings
 from src.main import criar_app
+from src.tests.dubles.esteira import instalar_esteira_sem_rede
 
 DATABASE_URL_FALSA = "postgresql+asyncpg://usuario:segredo@host-inexistente/teste"
 
@@ -42,6 +43,8 @@ def preparar_app(monkeypatch) -> Callable[..., tuple[TestClient, RelogioFalso]]:
         monkeypatch.setattr(settings_module, "get_settings", lambda: custom)
         relogio = RelogioFalso()
         api = criar_app(relogio_limite=relogio)
+        # O assunto aqui é o limite: a esteira real exigiria LLM e OpenAlex.
+        instalar_esteira_sem_rede(api, monkeypatch)
         return TestClient(api), relogio
 
     return _preparar
