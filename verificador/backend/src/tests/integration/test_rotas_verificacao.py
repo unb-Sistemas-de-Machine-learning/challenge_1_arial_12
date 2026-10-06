@@ -221,6 +221,19 @@ def test_todas_as_buscas_falhando_vira_openalex_indisponivel(
     assert len(duble.chamadas) == 1  # o Juiz nem foi chamado
 
 
+def test_todas_as_buscas_recusadas_viram_busca_recusada(montar, monkeypatch) -> None:
+    """4xx é consulta errada, não serviço fora do ar — e o leitor lê a diferença."""
+    app = montar()
+    instalar_openalex(monkeypatch, OpenAlexFalsa(status=400))
+    duble = instalar_llm(app, TERMOS_DO_TRIADOR, RESPOSTA_DO_JUIZ)
+
+    with TestClient(app) as client:
+        resposta = client.post("/verificar", json={"trecho": TRECHO})
+
+    conferir_erro(resposta, 502, CodigoErro.BUSCA_RECUSADA)
+    assert len(duble.chamadas) == 1  # o Juiz nem foi chamado
+
+
 def test_juiz_estourando_o_tempo_vira_llm_timeout(montar, monkeypatch) -> None:
     app = montar()
     instalar_openalex(monkeypatch, OpenAlexFalsa())

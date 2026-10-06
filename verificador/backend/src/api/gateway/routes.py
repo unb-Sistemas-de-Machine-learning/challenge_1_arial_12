@@ -64,6 +64,7 @@ def health() -> dict[str, bool]:
         },
         422: {"model": Erro, "description": "Entrada inválida"},
         429: {"model": Erro, "description": "Limite de solicitações excedido"},
+        502: {"model": Erro, "description": "A OpenAlex recusou todas as buscas"},
         503: {"model": Erro, "description": "Busca de estudos ou análise indisponível"},
         504: {"model": Erro, "description": "Tempo de análise excedido"},
         500: {"model": Erro, "description": "Erro interno"},
@@ -99,6 +100,12 @@ async def verificar(
     extracao = await triador.extrair(pedido.trecho)
     try:
         pesquisa = await pesquisador.pesquisar(extracao.buscas)
+    except OpenAlexRecusouABusca as erro:
+        # Todas as buscas recusadas: a OpenAlex respondeu, e o problema é a
+        # consulta. Dizer `openalex_indisponivel` aqui culparia um serviço que
+        # está no ar e mandaria o leitor tentar mais tarde sem motivo.
+        logger.error("Todas as buscas do Pesquisador foram recusadas: %s", erro)
+        raise ErroGateway(CodigoErro.BUSCA_RECUSADA) from erro
     except OpenAlexIndisponivel as erro:
         logger.warning("Nenhuma busca do Pesquisador funcionou: %s", erro)
         raise ErroGateway(CodigoErro.OPENALEX_INDISPONIVEL) from erro

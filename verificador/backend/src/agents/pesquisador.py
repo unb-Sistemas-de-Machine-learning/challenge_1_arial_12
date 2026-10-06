@@ -26,6 +26,7 @@ from src.services.openalex import (
     TOP_PADRAO,
     ErroOpenAlex,
     OpenAlexIndisponivel,
+    OpenAlexRecusouABusca,
     Trabalho,
     intercalar,
     normalizar_buscas,
@@ -83,9 +84,10 @@ class AgentePesquisador:
     async def pesquisar(self, buscas: Sequence[str]) -> ResultadoDaPesquisa:
         """Os trabalhos das buscas, intercalados por posição e sem repetição.
 
-        Levanta `ValueError` se a lista não tiver nenhuma busca útil, e
-        `OpenAlexIndisponivel` se **nenhuma** busca funcionar. Falha parcial
-        não é erro: entra em `falhas`.
+        Levanta `ValueError` se a lista não tiver nenhuma busca útil. Se
+        **nenhuma** busca funcionar, levanta `OpenAlexRecusouABusca` quando
+        todas foram recusadas (consulta malformada) e `OpenAlexIndisponivel`
+        no resto dos casos. Falha parcial não é erro: entra em `falhas`.
         """
         pedidas = normalizar_buscas(buscas)
         if not pedidas:
@@ -99,18 +101,29 @@ class AgentePesquisador:
         )
 
         falhas: dict[str, str] = {}
+        recusas = 0
         listas: list[list[Trabalho]] = []
         for busca, resposta in zip(pedidas, respostas, strict=True):
             if isinstance(resposta, ErroOpenAlex):
                 falhas[busca] = str(resposta)
+                if isinstance(resposta, OpenAlexRecusouABusca):
+                    recusas += 1
             else:
                 listas.append(resposta)
 
         if len(falhas) == len(pedidas):
-            raise OpenAlexIndisponivel(
+            motivo = (
                 f"nenhuma das {len(pedidas)} buscas funcionou: "
                 f"{next(iter(falhas.values()))}"
             )
+            # Recusa e indisponibilidade levam o leitor a ações opostas: uma
+            # consulta malformada não melhora esperando, e dizer "tente mais
+            # tarde" manda ele repetir o que vai falhar igual. Só quando TODAS
+            # as falhas são recusa a culpa é da consulta; uma indisponível no
+            # meio já faz do conjunto um problema de serviço.
+            if recusas == len(pedidas):
+                raise OpenAlexRecusouABusca(motivo)
+            raise OpenAlexIndisponivel(motivo)
         if falhas:
             logger.warning(
                 "Pesquisador seguiu com %d de %d buscas; falharam: %s",

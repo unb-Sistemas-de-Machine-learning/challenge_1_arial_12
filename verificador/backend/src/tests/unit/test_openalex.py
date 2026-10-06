@@ -25,7 +25,9 @@ from src.services.openalex import (
     encurtar_doi,
     encurtar_id,
     intercalar,
+    normalizar_buscas,
     remontar_abstract,
+    sanitizar_busca,
 )
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "openalex"
@@ -458,6 +460,65 @@ async def test_a_consulta_pede_so_os_campos_usados() -> None:
         bancada.ultima.url.params["filter"] == "title_and_abstract.search:polylaminin"
     )
     assert bancada.ultima.url.params["select"] == openalex_tool.CAMPOS
+
+
+# --- Saneamento: o que a OpenAlex leria como sintaxe de filtro ----------------
+
+
+@pytest.mark.parametrize(
+    ("bruta", "esperada"),
+    [
+        # O caso real: a busca nº 1 do Triador é o trecho original, e prosa em
+        # português tem vírgula. Sem o saneamento, a API devolve 400.
+        (
+            "A medula espinhal e a parte do sistema nervoso central que, junto "
+            "com o encefalo, forma o eixo neural.",
+            "A medula espinhal e a parte do sistema nervoso central que junto "
+            "com o encefalo forma o eixo neural.",
+        ),
+        # `|` é o OU da OpenAlex: passaria calado, alargando a busca.
+        ("medula | espinhal", "medula espinhal"),
+        ("vitamina C, zinco e selenio", "vitamina C zinco e selenio"),
+        # Separador colado na palavra não gruda as duas vizinhas.
+        ("cafe,diabetes", "cafe diabetes"),
+        # O que não é sintaxe de filtro fica: já conferido contra a API real,
+        # que responde 200 para todos.
+        ("efeito (observado): 48% — a/b", "efeito (observado): 48% — a/b"),
+        ("  polylaminin  ", "polylaminin"),
+        ("", ""),
+        (",", ""),
+    ],
+)
+def test_saneamento_tira_so_a_sintaxe_de_filtro(bruta: str, esperada: str) -> None:
+    assert sanitizar_busca(bruta) == esperada
+
+
+@pytest.mark.asyncio
+async def test_virgula_do_trecho_nao_chega_ao_filtro() -> None:
+    """Uma vírgula no filtro é 400 na borda da OpenAlex, antes de qualquer busca."""
+    bancada = bancada_comum()
+
+    await bancada.cliente.buscar("polylaminin, spinal cord")
+
+    assert (
+        bancada.ultima.url.params["filter"]
+        == "title_and_abstract.search:polylaminin spinal cord"
+    )
+
+
+@pytest.mark.asyncio
+async def test_busca_so_de_separadores_e_recusada_sem_rede() -> None:
+    bancada = bancada_comum()
+
+    with pytest.raises(ValueError, match="não pode ser vazia"):
+        await bancada.cliente.buscar(" , | ")
+
+    assert bancada.requisicoes == []
+
+
+def test_duas_variacoes_que_so_diferem_na_pontuacao_valem_uma() -> None:
+    """Desduplicar antes do saneamento gastaria duas requisições iguais."""
+    assert normalizar_buscas(["cafe, diabetes", "cafe diabetes"]) == ["cafe diabetes"]
 
 
 # --- Busca em lote: a lista de strings do Triador -----------------------------

@@ -13,7 +13,12 @@ import pytest
 
 from src.agents.pesquisador import AgentePesquisador, ResultadoDaPesquisa
 from src.api.schemas.busca import TrabalhoEncontrado
-from src.services.openalex import ClienteOpenAlex, OpenAlexIndisponivel, Trabalho
+from src.services.openalex import (
+    ClienteOpenAlex,
+    OpenAlexIndisponivel,
+    OpenAlexRecusouABusca,
+    Trabalho,
+)
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "openalex"
 
@@ -236,6 +241,24 @@ async def test_busca_recusada_tambem_conta_como_falha_parcial() -> None:
 @pytest.mark.asyncio
 async def test_todas_falhando_levanta_openalex_indisponivel() -> None:
     openalex = OpenAlexFalsa({"a": 500, "b": 503})
+
+    with pytest.raises(OpenAlexIndisponivel):
+        await AgentePesquisador(openalex.cliente()).pesquisar(["a", "b"])
+
+
+@pytest.mark.asyncio
+async def test_todas_recusadas_nao_viram_indisponivel() -> None:
+    """Recusa não é queda: dizer o contrário manda o leitor esperar por nada."""
+    openalex = OpenAlexFalsa({"a": 400, "b": 422})
+
+    with pytest.raises(OpenAlexRecusouABusca):
+        await AgentePesquisador(openalex.cliente()).pesquisar(["a", "b"])
+
+
+@pytest.mark.asyncio
+async def test_uma_indisponivel_no_meio_das_recusas_ainda_e_indisponivel() -> None:
+    """A dúvida pende para o serviço: com uma queda no meio, repetir pode valer."""
+    openalex = OpenAlexFalsa({"a": 400, "b": 503})
 
     with pytest.raises(OpenAlexIndisponivel):
         await AgentePesquisador(openalex.cliente()).pesquisar(["a", "b"])

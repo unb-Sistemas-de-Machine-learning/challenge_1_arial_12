@@ -571,7 +571,8 @@ flowchart TD
     B -- "nenhuma" --> E["OpenAlex para todas"]
     D --> F
     E --> F{"OpenAlex respondeu?"}
-    F -- "não, nenhuma busca" --> ERR["erro openalex_indisponivel<br/>503"]
+    F -- "não, nenhuma busca<br/>(ao menos uma caiu)" --> ERR["erro openalex_indisponivel<br/>503"]
+    F -- "não, todas recusadas<br/>(4xx da OpenAlex)" --> ERR2["erro busca_recusada<br/>502"]
     F -- "sim, ao menos uma" --> G["junta, remove repetidos"]
     C --> G
     G --> H["descarta trabalhos<br/>sem abstract ou sem DOI"]
@@ -620,6 +621,7 @@ flowchart LR
         e2["LLMIndisponivel /<br/>LLMRecusouOPedido"]
         e3["RespostaInvalidaDoLLM<br/>após 2 tentativas do Juiz"]
         e4["OpenAlexIndisponivel"]
+        e4b["OpenAlexRecusouABusca<br/>em todas as buscas"]
         e5["Pedido inválido"]
         e6["Rate limit"]
     end
@@ -627,6 +629,7 @@ flowchart LR
         r504["504 llm_timeout"]
         r503a["503 llm_indisponivel"]
         r503b["503 openalex_indisponivel"]
+        r502["502 busca_recusada"]
         r422["422 entrada_invalida"]
         r429["429 limite excedido"]
     end
@@ -634,6 +637,7 @@ flowchart LR
     e2 --> r503a
     e3 --> r503a
     e4 --> r503b
+    e4b --> r502
     e5 --> r422
     e6 --> r429
 ```

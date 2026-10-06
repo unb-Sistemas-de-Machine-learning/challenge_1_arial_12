@@ -121,11 +121,18 @@ Erros HTTP retornam `{"codigo":"...","mensagem":"..."}`. O cabeçalho
 ao investigar uma falha. A extensão escolhe o texto exibido pelo `codigo`, sem
 mostrar detalhes técnicos da resposta.
 
+`openalex_indisponivel` e `busca_recusada` são vizinhos e não se confundem: o
+primeiro é a OpenAlex fora do ar ou cortando tráfego, e esperar resolve; o
+segundo é ela no ar recusando a consulta (`4xx`), e repetir dá no mesmo. Por
+isso o texto de `busca_recusada` não manda tentar mais tarde, e o painel não
+oferece **Tentar novamente**.
+
 | Status | Código | Mensagem sugerida na extensão |
 | :--- | :--- | :--- |
 | 422 | `entrada_invalida` | Revise o texto selecionado e tente novamente. |
 | 429 | `limite_excedido` | Muitas solicitações. Aguarde um pouco e tente novamente. |
 | 503 | `openalex_indisponivel` | A busca de estudos está indisponível. Tente novamente mais tarde. |
+| 502 | `busca_recusada` | Não foi possível buscar estudos para este trecho. |
 | 504 | `llm_timeout` | A análise demorou demais. Tente novamente. |
 | 503 | `llm_indisponivel` | A análise está indisponível. Tente novamente mais tarde. |
 | 404 | `recurso_nao_encontrado` | Serviço não encontrado. |
@@ -271,7 +278,10 @@ informa nos dados seguros disponíveis.
    buscas externas rodam em paralelo, no máximo `PESQUISADOR_CONCORRENCIA` (padrão
    `5`) ao mesmo tempo. Junta tudo intercalando por posição, sem repetir o mesmo
    DOI, e entrega até 5 trabalhos. Busca que falha só reduz a cobertura; todas
-   falhando viram `503 openalex_indisponivel`.
+   falhando viram `503 openalex_indisponivel` — ou `502 busca_recusada`, quando
+   todas foram recusadas pela OpenAlex em vez de falharem por indisponibilidade.
+   Antes de montar o filtro, cada busca é saneada: vírgula e `|` viram espaço,
+   porque a OpenAlex os lê como sintaxe de filtro e não como texto.
 3. **Juiz** — descarta trabalhos sem abstract ou DOI e decide o veredito.
 
 O veredito é gravado na tabela `veredito`, e o `id` devolvido é o que

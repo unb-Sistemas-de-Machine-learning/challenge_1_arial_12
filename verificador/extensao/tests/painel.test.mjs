@@ -53,7 +53,8 @@ test("três estados têm rótulo textual e classes de cor distintas", () => {
 
 test("todos os códigos públicos têm mensagem amigável; desconhecido é genérico", () => {
   const codigos = [
-    "entrada_invalida", "limite_excedido", "openalex_indisponivel", "llm_timeout", "llm_indisponivel",
+    "entrada_invalida", "limite_excedido", "openalex_indisponivel", "busca_recusada",
+    "llm_timeout", "llm_indisponivel",
     "recurso_nao_encontrado", "metodo_nao_permitido", "erro_requisicao",
     "servico_indisponivel", "erro_interno",
   ];
@@ -66,4 +67,6 @@ test("todos os códigos públicos têm mensagem amigável; desconhecido é gené
   assert.equal(mensagemDeErro("codigo_novo"), MENSAGENS_ERRO.erro_interno);
   assert.match(htmlErro("falha_rede"), /Tentar novamente/);
   assert.doesNotMatch(htmlErro("erro_interno"), /Tentar novamente/);
+  // Recusa não melhora com repetição, e o texto não pode mandar esperar.
+  assert.doesNotMatch(htmlErro("busca_recusada"), /Tentar novamente|mais tarde/);
 });
