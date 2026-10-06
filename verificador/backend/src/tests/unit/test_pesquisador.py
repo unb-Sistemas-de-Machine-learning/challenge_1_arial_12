@@ -11,7 +11,11 @@ from pathlib import Path
 import httpx
 import pytest
 
-from src.agents.pesquisador import AgentePesquisador, ResultadoDaPesquisa
+from src.agents.pesquisador import (
+    AgentePesquisador,
+    ResultadoDaPesquisa,
+    chave_por_doi,
+)
 from src.api.schemas.busca import TrabalhoEncontrado
 from src.services.openalex import (
     ClienteOpenAlex,
@@ -23,15 +27,27 @@ from src.services.openalex import (
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "openalex"
 
 
-def registro(identificador: str, doi: str | None = None) -> dict:
-    """Registro mínimo da OpenAlex, com o abstract em índice invertido."""
+def registro(
+    identificador: str,
+    doi: str | None = ...,  # type: ignore[assignment]
+    *,
+    abstract: bool = True,
+    retratado: bool = False,
+) -> dict:
+    """Registro mínimo da OpenAlex, com o abstract em índice invertido.
+
+    Julgável por padrão -- com abstract, com DOI e não retratado --, porque é
+    o caso normal e porque o Pesquisador agora descarta o que não é. Quem testa
+    o descarte pede o contrário de propósito: `doi=None`, `abstract=False` ou
+    `retratado=True`.
+    """
     return {
         "id": f"https://openalex.org/{identificador}",
         "display_name": f"Trabalho {identificador}",
         "publication_year": 2020,
-        "doi": doi,
-        "is_retracted": False,
-        "abstract_inverted_index": {"texto": [0], "curto": [1]},
+        "doi": f"10.1/{identificador.casefold()}" if doi is ... else doi,
+        "is_retracted": retratado,
+        "abstract_inverted_index": ({"texto": [0], "curto": [1]} if abstract else None),
     }
 
 
@@ -112,10 +128,15 @@ async def test_devolve_os_trabalhos_no_tipo_que_o_juiz_recebe() -> None:
 
     assert isinstance(resultado, ResultadoDaPesquisa)
     assert resultado.falhas == {}
-    assert len(resultado.trabalhos) == 5
+    # Quatro, e não os cinco que a OpenAlex devolveu: esta é uma resposta real
+    # capturada, e um dos cinco veio sem `abstract_inverted_index`. O número
+    # mede a cobertura de abstract da OpenAlex, não o Pesquisador -- 20% da
+    # primeira página de uma busca comum não é julgável.
+    assert len(resultado.trabalhos) == 4
+    assert resultado.nao_julgaveis == 1
     assert all(isinstance(t, TrabalhoEncontrado) for t in resultado.trabalhos)
+    assert all(t.abstract and t.doi for t in resultado.trabalhos)
     assert resultado.trabalhos[0].doi == "10.1096/fj.10-157628"
-    assert resultado.trabalhos[0].abstract
 
 
 @pytest.mark.asyncio
@@ -147,7 +168,7 @@ async def test_mesmo_doi_em_formatos_diferentes_sai_uma_vez_so() -> None:
 
 
 @pytest.mark.asyncio
-async def test_sem_doi_a_repeticao_e_reconhecida_pelo_id() -> None:
+async def test_o_mesmo_id_em_duas_buscas_sai_uma_vez_so() -> None:
     openalex = OpenAlexFalsa(
         {
             "a": corpo(registro("W1"), registro("W2")),
@@ -158,6 +179,26 @@ async def test_sem_doi_a_repeticao_e_reconhecida_pelo_id() -> None:
     resultado = await AgentePesquisador(openalex.cliente()).pesquisar(["a", "b"])
 
     assert [t.id for t in resultado.trabalhos] == ["W1", "W2", "W3"]
+
+
+def test_chave_por_doi_cai_no_id_quando_nao_ha_doi() -> None:
+    """A queda para o id não passa mais por `pesquisar` -- todo trabalho que
+    chega à intercalação tem DOI, senão `julgavel` o teria barrado. O
+    comportamento fica testado aqui porque `chave_por_doi` é usada direto em
+    `intercalar` e a queda ainda é o que impede id e DOI de colidirem.
+    """
+    sem_doi = Trabalho(
+        id="W1",
+        titulo="t",
+        ano=2020,
+        doi=None,
+        retratado=False,
+        abstract="a",
+        relevancia=None,
+        citacoes=None,
+    )
+
+    assert chave_por_doi(sem_doi) == "id:W1"
 
 
 @pytest.mark.asyncio
@@ -325,16 +366,102 @@ async def test_cache_quebrado_nao_derruba_a_pesquisa() -> None:
     assert [t.id for t in resultado.trabalhos] == ["W1"]
 
 
-# --- Critério 7: o filtro é do Juiz -------------------------------------------
+# --- Critério 7: o não julgável sai antes do corte ----------------------------
 
 
 @pytest.mark.asyncio
-async def test_trabalho_sem_abstract_e_sem_doi_nao_e_descartado() -> None:
-    sem_nada = registro("W1") | {"abstract_inverted_index": None}
-    openalex = OpenAlexFalsa({"a": corpo(sem_nada)})
+async def test_trabalho_sem_abstract_e_descartado() -> None:
+    openalex = OpenAlexFalsa({"a": corpo(registro("W1", abstract=False))})
 
     resultado = await AgentePesquisador(openalex.cliente()).pesquisar(["a"])
 
-    assert [(t.id, t.doi, t.abstract) for t in resultado.trabalhos] == [
-        ("W1", None, None)
-    ]
+    assert resultado.trabalhos == []
+    assert resultado.nao_julgaveis == 1
+
+
+@pytest.mark.asyncio
+async def test_trabalho_sem_doi_e_descartado() -> None:
+    """Sem DOI o Juiz não consegue conferir a citação contra o trabalho certo."""
+    openalex = OpenAlexFalsa({"a": corpo(registro("W1", None))})
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(["a"])
+
+    assert resultado.trabalhos == []
+    assert resultado.nao_julgaveis == 1
+
+
+@pytest.mark.asyncio
+async def test_retratado_e_descartado() -> None:
+    openalex = OpenAlexFalsa({"a": corpo(registro("W1", retratado=True))})
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(["a"])
+
+    assert resultado.trabalhos == []
+    assert resultado.nao_julgaveis == 1
+
+
+@pytest.mark.asyncio
+async def test_o_nao_julgavel_nao_ocupa_vaga_do_limite() -> None:
+    """O ponto da mudança: as vagas vão para quem o Juiz consegue ler.
+
+    Antes, os três primeiros sem abstract enchiam as vagas e o Juiz recebia
+    lista vazia -- `nada_encontrado` com cinco artigos achados na mão.
+    """
+    openalex = OpenAlexFalsa(
+        {
+            "a": corpo(
+                registro("S1", abstract=False),
+                registro("S2", abstract=False),
+                registro("S3", abstract=False),
+                registro("C1"),
+                registro("C2"),
+            )
+        }
+    )
+
+    resultado = await AgentePesquisador(openalex.cliente(), limite=2).pesquisar(["a"])
+
+    assert [t.id for t in resultado.trabalhos] == ["C1", "C2"]
+    assert resultado.nao_julgaveis == 3
+
+
+@pytest.mark.asyncio
+async def test_nada_julgavel_devolve_lista_vazia_sem_erro() -> None:
+    """Lista vazia, e não exceção: quem decide o veredito é o Juiz.
+
+    `nao_julgaveis` é o que separa isto de "a busca não achou nada" -- os dois
+    chegam ao Juiz como lista vazia.
+    """
+    openalex = OpenAlexFalsa(
+        {"a": corpo(registro("W1", abstract=False), registro("W2", None))}
+    )
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(["a"])
+
+    assert resultado.trabalhos == []
+    assert resultado.falhas == {}
+    assert resultado.nao_julgaveis == 2
+
+
+@pytest.mark.asyncio
+async def test_busca_vazia_nao_conta_como_nao_julgavel() -> None:
+    openalex = OpenAlexFalsa({"a": corpo()})
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(["a"])
+
+    assert resultado.trabalhos == []
+    assert resultado.nao_julgaveis == 0
+
+
+@pytest.mark.asyncio
+async def test_o_mesmo_nao_julgavel_em_duas_buscas_conta_uma_vez() -> None:
+    """Contagem por identidade: somar os descartes de cada lista inflaria."""
+    sem_abstract = registro("W1", "10.1/repetido", abstract=False)
+    openalex = OpenAlexFalsa(
+        {"a": corpo(sem_abstract), "b": corpo(sem_abstract, registro("W2"))}
+    )
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(["a", "b"])
+
+    assert [t.id for t in resultado.trabalhos] == ["W2"]
+    assert resultado.nao_julgaveis == 1

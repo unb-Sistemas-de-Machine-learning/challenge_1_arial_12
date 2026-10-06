@@ -9,8 +9,14 @@ antes de cada ida à OpenAlex. Por isso o Pesquisador chama `ClienteOpenAlex.bus
 uma vez por string, em vez de `buscar_varias`, e reaproveita do cliente só a
 normalização da lista e a intercalação por posição.
 
-Não descarta trabalho sem abstract ou sem DOI: esse filtro é do Juiz, que já o
-aplica antes de gastar uma chamada de LLM.
+Descarta o que o Juiz não poderia julgar (`julgavel`) **antes** de cortar a
+amostra, e não depois. O corte é de cinco; o Juiz lê três. Filtrar depois do
+corte deixava as vagas serem preenchidas por relevância pura e só então
+descobria quantas serviam -- com cinco sem abstract, o Juiz recebia lista vazia
+e respondia `nada_encontrado`, que se lê como "não existe estudo" quando o que
+houve foi "achei estudos que não sei ler". O filtro não custa requisição: a
+OpenAlex já devolveu dez trabalhos por busca, e o que sobra do corte era
+descartado sem ninguém olhar.
 """
 
 import asyncio
@@ -19,7 +25,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-from src.agents.juiz import normalizar_doi
+from src.agents.juiz import julgavel, normalizar_doi
 from src.api.schemas.busca import TrabalhoEncontrado
 from src.services.cache import CacheDeBuscas, SemCache
 from src.services.openalex import (
@@ -53,6 +59,11 @@ class ResultadoDaPesquisa:
 
     trabalhos: list[TrabalhoEncontrado]
     falhas: dict[str, str]
+    # Quantos a OpenAlex devolveu e o filtro de `julgavel` barrou. Separa
+    # "a busca não achou nada" de "achou e nada era julgável": os dois chegam
+    # ao Juiz como lista curta, mas só o segundo é problema de cobertura de
+    # abstract na OpenAlex.
+    nao_julgaveis: int = 0
 
 
 def chave_por_doi(trabalho: Trabalho) -> str:
@@ -132,15 +143,39 @@ class AgentePesquisador:
                 falhas,
             )
 
+        # Filtrar ANTES de intercalar, não depois: as cinco vagas são para
+        # trabalho que o Juiz consegue ler. A posição que a intercalação usa
+        # passa a ser a posição entre os julgáveis -- "primeiro colocado com
+        # abstract" --, que continua comparável entre buscas.
+        julgaveis = [[t for t in lista if julgavel(t)] for lista in listas]
+
+        # Contado por identidade, e não somando os descartes de cada lista: o
+        # mesmo trabalho sem abstract aparece em várias buscas e seria contado
+        # várias vezes.
+        barrados = {
+            chave_por_doi(t) for lista in listas for t in lista if not julgavel(t)
+        }
+        achados = {chave_por_doi(t) for lista in listas for t in lista}
+        if barrados:
+            logger.info(
+                "Pesquisador descartou %d de %d trabalhos sem abstract, sem DOI "
+                "ou retratados; %d julgáveis sobraram para as %d vagas",
+                len(barrados),
+                len(achados),
+                len(achados) - len(barrados),
+                self.limite,
+            )
+
         # O DOI entra na intercalação, e não depois do corte: desduplicar
         # depois entregaria menos trabalhos ao Juiz do que o limite permite.
-        trabalhos = intercalar(listas, self.limite, chave=chave_por_doi)
+        trabalhos = intercalar(julgaveis, self.limite, chave=chave_por_doi)
         return ResultadoDaPesquisa(
             trabalhos=[
                 TrabalhoEncontrado.model_validate(trabalho.como_dicionario())
                 for trabalho in trabalhos
             ],
             falhas=falhas,
+            nao_julgaveis=len(barrados),
         )
 
     async def _uma(

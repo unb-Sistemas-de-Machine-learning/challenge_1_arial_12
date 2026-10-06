@@ -5,6 +5,7 @@ import logging
 import re
 from collections.abc import Sequence
 from enum import Enum
+from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -126,6 +127,38 @@ def normalizar_doi(valor: str | None) -> str:
     return doi.rstrip(".,;:!?)]}").casefold()
 
 
+class TrabalhoJulgavel(Protocol):
+    """O que decide se um trabalho pode ser julgado: abstract, DOI, retratação.
+
+    Protocolo, e não um tipo concreto, porque o Pesquisador aplica o mesmo
+    critério sobre `Trabalho` (o vocabulário da OpenAlex) e o Juiz sobre
+    `TrabalhoEncontrado` (o do contrato HTTP).
+    """
+
+    abstract: str | None
+    doi: str | None
+    retratado: bool
+
+
+def julgavel(trabalho: TrabalhoJulgavel) -> bool:
+    """Se este trabalho pode virar veredito.
+
+    Sem abstract o modelo não tem o que ler; sem DOI não há como conferir a
+    citação contra o trabalho certo (`_conferir_citacao`); retratado não
+    sustenta nem matiza alegação nenhuma.
+
+    Vive aqui, e não no Pesquisador, porque o critério é do Juiz. O Pesquisador
+    o importa para não gastar as vagas da amostra com trabalho que ia cair
+    neste filtro de todo jeito -- mas quem define o que é julgável é quem julga.
+    """
+    return bool(
+        trabalho.abstract
+        and trabalho.abstract.strip()
+        and normalizar_doi(trabalho.doi)
+        and not trabalho.retratado
+    )
+
+
 def _dois_em(texto: str) -> set[str]:
     return {normalizar_doi(achado.group()) for achado in _DOI.finditer(texto)}
 
@@ -168,19 +201,11 @@ class AgenteJuiz:
     async def julgar(
         self, trecho: str, trabalhos: Sequence[TrabalhoEncontrado]
     ) -> Veredito:
-        candidatos = [
-            trabalho
-            for trabalho in trabalhos
-            if trabalho.abstract
-            and trabalho.abstract.strip()
-            and normalizar_doi(trabalho.doi)
-            # Retratado fora daqui, e não só barrado no `sustenta`: ele não
-            # sustenta nem matiza alegação nenhuma, e com três vagas ocupar uma
-            # delas custa o abstract que teria decidido o veredito. Lista que
-            # fica vazia por isso cai no `nada_encontrado` abaixo, que é o que
-            # as orientações mandam quando só há retratados.
-            and not trabalho.retratado
-        ]
+        # O Pesquisador já aplica `julgavel` antes de cortar a amostra, então
+        # na verificação esta lista raramente encolhe. O filtro fica porque o
+        # Juiz também é chamado direto -- pelos evals e pelos testes -- e porque
+        # o que entra no prompt é responsabilidade dele, não de quem o chama.
+        candidatos = [trabalho for trabalho in trabalhos if julgavel(trabalho)]
         if not candidatos:
             return Veredito(
                 estado=Estado.NADA_ENCONTRADO,

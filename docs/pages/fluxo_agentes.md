@@ -573,9 +573,9 @@ flowchart TD
     E --> F{"OpenAlex respondeu?"}
     F -- "não, nenhuma busca<br/>(ao menos uma caiu)" --> ERR["erro openalex_indisponivel<br/>503"]
     F -- "não, todas recusadas<br/>(4xx da OpenAlex)" --> ERR2["erro busca_recusada<br/>502"]
-    F -- "sim, ao menos uma" --> G["junta, remove repetidos"]
+    F -- "sim, ao menos uma" --> G["descarta sem abstract, sem DOI<br/>ou retratados; junta, remove<br/>repetidos, fica com os 5"]
     C --> G
-    G --> H["descarta trabalhos sem abstract,<br/>sem DOI ou retratados;<br/>fica com os 3 primeiros"]
+    G --> H["Juiz confirma o filtro;<br/>fica com os 3 primeiros"]
     H --> I{"sobrou algum?"}
     I -- não --> V["lista vazia → Juiz devolve<br/>nada_encontrado sem LLM"]
     I -- sim --> J{"muitos abstracts?"}

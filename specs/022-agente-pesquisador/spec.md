@@ -37,7 +37,9 @@ Esta spec cria o Pesquisador e liga a esteira **Triador → Pesquisador → Juiz
 4. Falha em **todas** as buscas resulta no erro padronizado `openalex_indisponivel` (HTTP 503).
 5. Existe um **ponto único de extensão** para consultar um cache antes da busca externa, por string de busca. Sem cache configurado, toda busca vai à OpenAlex. Com um cache que já tem a resposta, a OpenAlex não é chamada para aquela string.
 6. O Pesquisador chama o cliente da OpenAlex diretamente, por função, e **nunca** a rota HTTP `POST /buscar`.
-7. O Pesquisador **não** descarta trabalhos sem abstract ou sem DOI: esse filtro já é do Juiz e não é duplicado.
+7. O Pesquisador descarta trabalhos sem abstract, sem DOI ou retratados **antes** de cortar a amostra, aplicando o predicado `julgavel` do Juiz (sem duplicar o critério: a função é importada, não reescrita). O resultado traz `nao_julgaveis`, a contagem por identidade do que foi barrado.
+
+   > **Revisto depois da entrega original.** O critério dizia o contrário -- "o Pesquisador **não** descarta (...) esse filtro já é do Juiz" --, e a decisão de manter 5 (seção 6) foi tomada "sabendo que muitos trabalhos chegam sem abstract". O que não estava dimensionado era a consequência: filtrando só no Juiz, as 5 vagas eram preenchidas por relevância pura e, quando nenhuma das 5 tinha abstract, o Juiz recebia lista vazia e respondia `nada_encontrado` -- indistinguível, para quem lê, de "não existe estudo sobre isso". Medido no fixture real `busca_polilaminina.json`, 1 dos 5 primeiros resultados já não é julgável. O filtro não custa requisição nenhuma: a OpenAlex devolve 10 trabalhos por busca e os excedentes eram descartados sem serem olhados.
 
 ### Esteira em `POST /verificar`
 
@@ -87,6 +89,7 @@ O Pesquisador **não usa LLM**. A esteira usa os LLMs do Triador e do Juiz sem a
 - [x] **`termos` do veredito.** Decidido: conceitos do Triador (critério 14).
 - [x] **Falha ao gravar no banco.** Decidido: veredito com `id = null` e falha no log (critério 10), para não descartar uma análise que já custou duas chamadas de LLM.
 - [x] **Quantos trabalhos vão ao Juiz.** Decidido: mantém 5 (critério 15). Aumentar só se a qualidade pedir, sabendo que muitos trabalhos chegam sem abstract.
+  - **Revisto:** os 5 continuam, mas agora são 5 **julgáveis** (critério 7 revisto). O Juiz lê 3 (`MAX_CANDIDATOS`), então o 5 é folga para a desduplicação; com o filtro antes do corte, essa folga passa a servir para o que foi pedido.
 - [x] **Tempo total da verificação.** Decidido: sem teto nesta entrega (critério 16).
 - [x] **Sem `LLM_API_KEY` no servidor.** Decidido: aceito, sem modo mock; o README é atualizado (critério 17).
 
