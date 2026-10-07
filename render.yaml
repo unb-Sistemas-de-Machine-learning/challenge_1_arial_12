@@ -48,7 +48,7 @@ services:
         sync: false
 
       - key: LLM_PROVEDOR
-        value: groq
+        value: gemini
       - key: LLM_TEMPERATURA
         value: "0"
       - key: LLM_TIMEOUT_SEGUNDOS
