@@ -30,7 +30,12 @@ class TriadorSemLLM:
 
 
 class PesquisadorSemRede:
-    async def pesquisar(self, buscas: Sequence[str]) -> ResultadoDaPesquisa:
+    # `busca_de_titulo` entra na assinatura mesmo sem ser usada: a rota a passa
+    # sempre, e um dublê que a recuse viraria 500 em testes que nada têm a ver
+    # com o atalho de título.
+    async def pesquisar(
+        self, buscas: Sequence[str], *, busca_de_titulo: str | None = None
+    ) -> ResultadoDaPesquisa:
         return ResultadoDaPesquisa(trabalhos=[], falhas={})
 
 

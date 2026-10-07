@@ -1,0 +1,64 @@
+# Blueprint do Render. Fica na raiz porque e onde o Render procura o arquivo;
+# `rootDir` e que aponta para o backend dentro do monorepo.
+services:
+  - type: web
+    name: verificador-api
+    runtime: docker
+    plan: free
+    # Ohio para casar com o Neon em AWS us-east-2: a regiao do banco e a da API
+    # tem que ser a mesma, senao cada consulta atravessa os EUA. E a regiao nao
+    # muda depois de criada -- o Render exige apagar e recriar o servico.
+    region: ohio
+    rootDir: verificador/backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # O healthcheck nao conecta ao banco (de proposito: ver `ciclo_de_vida` em
+    # src/main.py), entao responde mesmo com o Postgres fora do ar -- e o
+    # Render nao derruba o deploy por indisponibilidade do banco.
+    healthCheckPath: /health
+
+    # O comando de subida e um script no repositorio, e nao uma linha aqui: o
+    # `&&` nao atravessa o parser do Render, que entrega a string inteira ao
+    # `sh` como um unico nome de comando. O script roda as migracoes (pre-deploy
+    # exige plano pago) e respeita o $PORT que a plataforma define.
+    # Invocado via `sh`, e nao como `./scripts/iniciar.sh`: assim nao depende do
+    # bit de execucao, que um clone com `core.fileMode=false` (Windows) perde.
+    dockerCommand: sh ./scripts/iniciar.sh
+
+    envVars:
+      - key: APP_DEBUG
+        value: "false"
+
+      # `sync: false` = o Render pede o valor na criacao e guarda no painel, em
+      # vez de versionar o segredo aqui. Vale para toda chave e para a URL do
+      # banco.
+      - key: DATABASE_URL
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: OPENALEX_MAILTO
+        sync: false
+      - key: OPENALEX_API_KEY
+        sync: false
+
+      # A origem real da extensao (`chrome-extension://<id>`) so existe depois
+      # do primeiro upload na store, por isso fica no painel e nao aqui.
+      - key: CORS_ORIGINS
+        sync: false
+
+      - key: LLM_PROVEDOR
+        value: gemini
+      - key: LLM_TEMPERATURA
+        value: "0"
+      - key: LLM_TIMEOUT_SEGUNDOS
+        value: "15"
+
+      # O limite de taxa e contado em memoria, por processo. No plano gratuito
+      # ha um processo e uma instancia, entao o numero aqui e o limite real --
+      # subir de plano com mais de uma instancia multiplica o limite pelo
+      # numero delas, e ai a contagem precisa sair da memoria.
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "30"
+      - key: RATE_LIMIT_WINDOW_SECONDS
+        value: "60"

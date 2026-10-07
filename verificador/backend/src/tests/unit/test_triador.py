@@ -15,11 +15,13 @@ cumprir está na última seção.
 import pytest
 
 from src.agents import orientacoes
+from src.agents.orientacoes import ABERTURA_INTERNA
 from src.agents.triador import (
     EIXOS,
     AgenteTriador,
     Glossario,
     TermosDeBusca,
+    busca_literal_de_titulo,
     canonizar_termos,
     forma_canonica,
     glossario_padrao,
@@ -549,6 +551,35 @@ def test_o_prompt_nao_leva_o_cabecalho_de_metadados() -> None:
     assert "description:" not in documento.corpo.splitlines()[0]
 
 
+def test_o_prompt_nao_leva_os_blocos_internos() -> None:
+    """A prosa de manutenção fica no arquivo e fora da chamada.
+
+    No plano gratuito a janela é de 8 mil tokens por minuto para as duas
+    chamadas da verificação: o que viaja em toda chamada sem mudar a resposta
+    sai do orçamento da verificação seguinte.
+    """
+    documento = orientacoes.ler("triador/ORIENTACOES.md")
+
+    assert "Por que o trabalho é partido assim" in documento.corpo
+    assert "Por que o trabalho é partido assim" not in documento.prompt
+    assert "## Referências" in documento.corpo
+    assert "## Referências" not in documento.prompt
+    # As regras continuam todas lá.
+    assert "## Regras de extração" in documento.prompt
+    assert "## O erro inaceitável" in documento.prompt
+    assert ABERTURA_INTERNA not in documento.prompt
+    assert len(documento.prompt) < len(documento.corpo)
+
+
+def test_os_exemplos_fora_do_prompt_ficam_no_arquivo() -> None:
+    """Decisão reversível: o exemplo retirado fica documentado com o motivo."""
+    documento = orientacoes.ler("triador/referencias/exemplos.md")
+
+    assert "Oxycontin" in documento.corpo
+    assert "Oxycontin" not in documento.prompt
+    assert "O par que sustenta a busca" in documento.prompt
+
+
 # --- O arquivo de verdade -----------------------------------------------------
 
 
@@ -570,3 +601,138 @@ def test_os_eixos_documentados_sao_os_eixos_do_codigo() -> None:
     for eixo in EIXOS:
         assert f"`{eixo.id}`" in documentados, f"eixo {eixo.id} não documentado"
     assert documentados.count("| :-- | :--- | :--- | :--- |") == 1
+
+
+# --- Título citado -----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "bruto, esperado",
+    [
+        (
+            "Polylaminin promotes regeneration after spinal cord injury",
+            "Polylaminin promotes regeneration after spinal cord injury",
+        ),
+        # Aspas de abertura e fechamento, retas e curvas: o modelo copia o
+        # título com as que havia na matéria.
+        ('"Coffee and cardiac arrhythmia"', "Coffee and cardiac arrhythmia"),
+        ("“Coffee and cardiac arrhythmia”", "Coffee and cardiac arrhythmia"),
+        # Espaço e quebra de linha viram um espaço só.
+        ("  Coffee   and\n  arrhythmia  ", "Coffee and arrhythmia"),
+    ],
+)
+def test_titulo_citado_vira_busca_literal(bruto: str, esperado: str) -> None:
+    """Nada de glossário nem forma canônica: título é citação, não conceito."""
+    assert busca_literal_de_titulo(bruto) == esperado
+
+
+@pytest.mark.parametrize(
+    "bruto",
+    [
+        "",
+        "   ",
+        # Menos de três palavras não é título: é expressão genérica no campo
+        # errado, e a busca literal traria o acervo da área.
+        "coffee",
+        "coffee arrhythmia",
+        None,
+        123,
+        # Acima do teto de caracteres a busca não chegaria inteira à API.
+        "palavra " * 60,
+    ],
+)
+def test_titulo_que_nao_serve_como_busca_e_recusado(bruto: object) -> None:
+    assert busca_literal_de_titulo(bruto) is None
+
+
+def test_titulo_preserva_maiuscula_e_pontuacao_do_subtitulo() -> None:
+    """Dois-pontos e capitalização são do título, e a OpenAlex os tolera."""
+    titulo = "Polylaminin: a new scaffold for axonal regeneration"
+    assert busca_literal_de_titulo(titulo) == titulo
+
+
+@pytest.mark.asyncio
+async def test_extracao_carrega_o_titulo_junto_com_as_buscas(
+    glossario: Glossario, sem_espera
+) -> None:
+    """Título e conceitos convivem: um é o atalho, o outro é o que resta dele."""
+    triador = agente(
+        {
+            "intervencao": "consumo de álcool",
+            "desfecho": "encolhimento do cérebro",
+            "condicao": "",
+            "populacao": "",
+            "titulo_citado": "Alcohol consumption and brain atrophy in adults",
+        },
+        glossario=glossario,
+        sem_espera=sem_espera,
+    )
+
+    extracao = await triador.extrair(TRECHO)
+
+    assert extracao.busca_de_titulo == "Alcohol consumption and brain atrophy in adults"
+    assert extracao.degradada is False
+    # Os eixos continuam montados: o título não substitui a busca por conceito.
+    assert "alcohol consumption brain atrophy" in extracao.buscas
+
+
+@pytest.mark.asyncio
+async def test_sem_titulo_no_trecho_a_extracao_nao_traz_atalho(
+    glossario: Glossario, sem_espera
+) -> None:
+    triador = agente(
+        {
+            "intervencao": "consumo de álcool",
+            "desfecho": "encolhimento do cérebro",
+            "condicao": "",
+            "populacao": "",
+            "titulo_citado": "",
+        },
+        glossario=glossario,
+        sem_espera=sem_espera,
+    )
+
+    assert (await triador.extrair(TRECHO)).busca_de_titulo is None
+
+
+@pytest.mark.asyncio
+async def test_modelo_que_omite_o_campo_novo_nao_degrada_a_triagem(
+    glossario: Glossario, sem_espera
+) -> None:
+    """O campo entrou depois dos outros quatro, e por isso tem padrão.
+
+    Resposta no formato antigo é resposta válida sem atalho, e não formato
+    desobedecido -- degradar aqui trocaria um atalho que falta por uma falha
+    que não existe.
+    """
+    triador = agente(
+        {
+            "intervencao": "consumo de álcool",
+            "desfecho": "encolhimento do cérebro",
+            "condicao": "",
+            "populacao": "",
+        },
+        glossario=glossario,
+        sem_espera=sem_espera,
+    )
+
+    extracao = await triador.extrair(TRECHO)
+
+    assert extracao.degradada is False
+    assert extracao.busca_de_titulo is None
+    assert "alcohol consumption brain atrophy" in extracao.buscas
+
+
+@pytest.mark.asyncio
+async def test_triagem_degradada_nao_tem_titulo(
+    glossario: Glossario, sem_espera
+) -> None:
+    cliente = ClienteLLM(
+        DubleLLM(FalhaTransitoria("503")), dormir=sem_espera, max_tentativas=1
+    )
+    triador = AgenteTriador(cliente, glossario=glossario)
+
+    extracao = await triador.extrair(TRECHO)
+
+    assert extracao.degradada is True
+    assert extracao.busca_de_titulo is None

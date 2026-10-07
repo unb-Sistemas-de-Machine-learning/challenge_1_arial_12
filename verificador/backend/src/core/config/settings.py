@@ -3,11 +3,55 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
+
+# O Postgres gerenciado (Neon, Render, Supabase) entrega a URL no dialeto do
+# libpq: esquema `postgresql://` e TLS em `?sslmode=require`. Nenhum dos dois
+# serve ao asyncpg, que e o driver daqui -- o esquema escolhe psycopg2, e
+# `sslmode` chega a `asyncpg.connect()` como argumento inexistente e derruba a
+# conexao com `unexpected keyword argument 'sslmode'`. Normalizar na borda custa
+# estas linhas; a alternativa e cada integrante editar a URL a mao ao colar o
+# segredo no painel, e descobrir o erro no primeiro deploy.
+_ESQUEMAS_SINCRONOS = ("postgresql", "postgres")
+
+# Parametros que so o libpq entende e que nao tem equivalente no asyncpg: ele
+# recebe cada item da query como argumento nomeado de `connect()` e estoura em
+# qualquer um que nao conheca. `channel_binding` vem na string que o Neon
+# oferece para copiar, ao lado do `sslmode`; descartar e o comportamento certo
+# porque o canal ja esta sob TLS pelo `ssl`.
+_PARAMETROS_SO_DO_LIBPQ = frozenset({"channel_binding"})
+
+
+def normalizar_url_do_banco(url: str) -> str:
+    partes = urlsplit(url)
+    if partes.scheme not in _ESQUEMAS_SINCRONOS:
+        # Ja tem driver explicito (`postgresql+asyncpg`, ou outro de proposito
+        # em teste): respeitar a escolha de quem escreveu.
+        return url
+
+    consulta = parse_qsl(partes.query, keep_blank_values=True)
+    # O asyncpg le o mesmo conjunto de valores do libpq (`require`,
+    # `verify-full`, ...), so com outro nome de parametro: `ssl`. A traducao e
+    # de nome, nao de valor.
+    consulta = [
+        ("ssl", valor) if chave == "sslmode" else (chave, valor)
+        for chave, valor in consulta
+        if chave not in _PARAMETROS_SO_DO_LIBPQ
+    ]
+    return urlunsplit(
+        (
+            "postgresql+asyncpg",
+            partes.netloc,
+            partes.path,
+            urlencode(consulta),
+            partes.fragment,
+        )
+    )
 
 
 class Settings(BaseSettings):
@@ -62,7 +106,7 @@ class Settings(BaseSettings):
         raw_value = value.get_secret_value() if isinstance(value, SecretStr) else value
         if not isinstance(raw_value, str) or not raw_value.strip():
             raise ValueError("DATABASE_URL não pode estar vazia")
-        return value
+        return normalizar_url_do_banco(raw_value.strip())
 
     @field_validator(
         "llm_api_key",

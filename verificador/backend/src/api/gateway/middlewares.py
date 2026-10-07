@@ -25,6 +25,14 @@ STATUS_POR_CODIGO = {
     CodigoErro.ENTRADA_INVALIDA: 422,
     CodigoErro.LIMITE_EXCEDIDO: 429,
     CodigoErro.OPENALEX_INDISPONIVEL: 503,
+    # Não é 503: a OpenAlex estava no ar e respondeu. Também não é 4xx — quem
+    # chamou mandou um trecho válido, e foi a consulta montada aqui que saiu
+    # errada. 502 diz isso: o defeito está entre nós e o serviço de cima.
+    CodigoErro.BUSCA_RECUSADA: 502,
+    # A triagem não rodou, então não há busca nem veredito. 503 porque o que
+    # faltou foi o modelo: o trecho estava válido e repetir em instantes tende a
+    # funcionar — é tipicamente a janela de tokens do provedor.
+    CodigoErro.TRIAGEM_INDISPONIVEL: 503,
     CodigoErro.LLM_TIMEOUT: 504,
     CodigoErro.LLM_INDISPONIVEL: 503,
     CodigoErro.RECURSO_NAO_ENCONTRADO: 404,
@@ -38,6 +46,8 @@ MENSAGENS_PUBLICAS = {
     CodigoErro.ENTRADA_INVALIDA: "Não foi possível validar a solicitação.",
     CodigoErro.LIMITE_EXCEDIDO: "Limite de solicitações excedido.",
     CodigoErro.OPENALEX_INDISPONIVEL: "Serviço de busca indisponível.",
+    CodigoErro.BUSCA_RECUSADA: "A busca de estudos foi recusada.",
+    CodigoErro.TRIAGEM_INDISPONIVEL: "Não foi possível preparar a busca.",
     CodigoErro.LLM_TIMEOUT: "Tempo de análise excedido.",
     CodigoErro.LLM_INDISPONIVEL: "Serviço de análise indisponível.",
     CodigoErro.RECURSO_NAO_ENCONTRADO: "Recurso não encontrado.",

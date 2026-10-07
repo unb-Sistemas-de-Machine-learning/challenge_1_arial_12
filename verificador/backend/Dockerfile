@@ -13,6 +13,9 @@ RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin app
 COPY --chown=app:app src ./src
 COPY --chown=app:app alembic.ini .
 COPY --chown=app:app migrations ./migrations
+# O script de inicializacao da plataforma gerenciada; o compose local
+# passa o proprio `command:` e nao usa este caminho.
+COPY --chown=app:app scripts/iniciar.sh ./scripts/iniciar.sh
 
 EXPOSE 8000
 

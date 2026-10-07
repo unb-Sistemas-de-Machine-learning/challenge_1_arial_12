@@ -189,19 +189,28 @@ def test_sem_trabalhos_responde_nada_encontrado_sem_chamar_o_juiz(
     assert len(duble.chamadas) == 1  # só o Triador
 
 
-def test_triador_falhando_segue_so_com_o_trecho(montar, monkeypatch) -> None:
+def test_triador_falhando_vira_triagem_indisponivel(montar, monkeypatch) -> None:
+    """Sem tradução não há busca, e sem busca não há veredito a dar.
+
+    O trecho cru em português casa com quase nada na OpenAlex, então seguir
+    daqui terminaria em `nada_encontrado` — que o leitor lê como "não existe
+    estudo" quando o que houve foi "não consegui procurar".
+    """
     app = montar()
     openalex = OpenAlexFalsa()
     instalar_openalex(monkeypatch, openalex)
-    instalar_llm(app, FalhaTransitoria("503"), RESPOSTA_DO_JUIZ, max_tentativas=1)
+    duble = instalar_llm(
+        app, FalhaTransitoria("503"), RESPOSTA_DO_JUIZ, max_tentativas=1
+    )
 
     with TestClient(app) as client:
         resposta = client.post("/verificar", json={"trecho": TRECHO})
 
-    assert resposta.status_code == 200
-    assert resposta.json()["estado"] == "exagera"
-    assert resposta.json()["termos"] == []
-    assert openalex.buscas == [TRECHO]
+    conferir_erro(resposta, 503, CodigoErro.TRIAGEM_INDISPONIVEL)
+    # Nada depois do Triador roda: a recusa vem antes de gastar requisição de
+    # busca e a chamada de LLM do Juiz.
+    assert openalex.buscas == []
+    assert len(duble.chamadas) == 1
 
 
 # --- Erros padronizados -------------------------------------------------------
@@ -218,6 +227,19 @@ def test_todas_as_buscas_falhando_vira_openalex_indisponivel(
         resposta = client.post("/verificar", json={"trecho": TRECHO})
 
     conferir_erro(resposta, 503, CodigoErro.OPENALEX_INDISPONIVEL)
+    assert len(duble.chamadas) == 1  # o Juiz nem foi chamado
+
+
+def test_todas_as_buscas_recusadas_viram_busca_recusada(montar, monkeypatch) -> None:
+    """4xx é consulta errada, não serviço fora do ar — e o leitor lê a diferença."""
+    app = montar()
+    instalar_openalex(monkeypatch, OpenAlexFalsa(status=400))
+    duble = instalar_llm(app, TERMOS_DO_TRIADOR, RESPOSTA_DO_JUIZ)
+
+    with TestClient(app) as client:
+        resposta = client.post("/verificar", json={"trecho": TRECHO})
+
+    conferir_erro(resposta, 502, CodigoErro.BUSCA_RECUSADA)
     assert len(duble.chamadas) == 1  # o Juiz nem foi chamado
 
 
@@ -245,8 +267,11 @@ def test_juiz_respondendo_invalido_vira_llm_indisponivel(montar, monkeypatch) ->
     assert len(duble.chamadas) == 3  # Triador + Juiz com uma nova tentativa
 
 
-def test_sem_llm_api_key_responde_llm_indisponivel(montar, monkeypatch) -> None:
-    """Sem chave, o Triador degrada e o Juiz é quem não consegue responder."""
+def test_sem_llm_api_key_vira_triagem_indisponivel(montar, monkeypatch) -> None:
+    """Sem chave o Triador é a primeira etapa a faltar, e a esteira para nele.
+
+    O erro é da triagem, e não da análise: o Juiz nunca chegou a ser chamado.
+    """
     app = montar(llm_api_key=None)
     openalex = OpenAlexFalsa()
     instalar_openalex(monkeypatch, openalex)
@@ -254,24 +279,8 @@ def test_sem_llm_api_key_responde_llm_indisponivel(montar, monkeypatch) -> None:
     with TestClient(app) as client:
         resposta = client.post("/verificar", json={"trecho": TRECHO})
 
-    conferir_erro(resposta, 503, CodigoErro.LLM_INDISPONIVEL)
-    assert openalex.buscas == [TRECHO]
-
-
-def test_sem_llm_api_key_e_sem_trabalhos_responde_nada_encontrado(
-    montar, monkeypatch
-) -> None:
-    """Sem trabalhos o Juiz não usa o LLM, então a falta de chave não aparece."""
-    app = montar(llm_api_key=None)
-    instalar_openalex(
-        monkeypatch, OpenAlexFalsa(corpo=corpo_openalex(com_trabalho=False))
-    )
-
-    with TestClient(app) as client:
-        resposta = client.post("/verificar", json={"trecho": TRECHO})
-
-    assert resposta.status_code == 200
-    assert resposta.json()["estado"] == "nada_encontrado"
+    conferir_erro(resposta, 503, CodigoErro.TRIAGEM_INDISPONIVEL)
+    assert openalex.buscas == []
 
 
 def test_entrada_invalida_e_422_mesmo_sem_chaves(montar, monkeypatch) -> None:

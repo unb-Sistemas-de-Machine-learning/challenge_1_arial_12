@@ -121,11 +121,28 @@ Erros HTTP retornam `{"codigo":"...","mensagem":"..."}`. O cabeçalho
 ao investigar uma falha. A extensão escolhe o texto exibido pelo `codigo`, sem
 mostrar detalhes técnicos da resposta.
 
+`triagem_indisponivel` diz que o Triador não traduziu o trecho, e por isso não
+houve busca nem veredito. É o único erro além de `falha_rede` em que o painel
+oferece **Tentar novamente**: a causa quase sempre é a janela de tokens do
+provedor de LLM, e a mesma seleção um minuto depois funciona. O que ele
+substitui é pior do que ele: antes a esteira seguia com o trecho cru em
+português, não achava nada — prosa em português casa com quase nada na
+OpenAlex — e respondia `nada_encontrado`, que o leitor lê como "não existe
+estudo" quando o que houve foi "não consegui procurar".
+
+`openalex_indisponivel` e `busca_recusada` são vizinhos e não se confundem: o
+primeiro é a OpenAlex fora do ar ou cortando tráfego, e esperar resolve; o
+segundo é ela no ar recusando a consulta (`4xx`), e repetir dá no mesmo. Por
+isso o texto de `busca_recusada` não manda tentar mais tarde, e o painel não
+oferece **Tentar novamente**.
+
 | Status | Código | Mensagem sugerida na extensão |
 | :--- | :--- | :--- |
 | 422 | `entrada_invalida` | Revise o texto selecionado e tente novamente. |
 | 429 | `limite_excedido` | Muitas solicitações. Aguarde um pouco e tente novamente. |
 | 503 | `openalex_indisponivel` | A busca de estudos está indisponível. Tente novamente mais tarde. |
+| 502 | `busca_recusada` | Não foi possível buscar estudos para este trecho. |
+| 503 | `triagem_indisponivel` | Não foi possível preparar a busca agora. Tente novamente em instantes. |
 | 504 | `llm_timeout` | A análise demorou demais. Tente novamente. |
 | 503 | `llm_indisponivel` | A análise está indisponível. Tente novamente mais tarde. |
 | 404 | `recurso_nao_encontrado` | Serviço não encontrado. |
@@ -265,14 +282,22 @@ informa nos dados seguros disponíveis.
 1. **Triador** ([`triador.py`](backend/src/agents/triador.py)) — gera as buscas e
    os conceitos do trecho. Os conceitos (intervenção, desfecho, condição,
    população) vão para o campo `termos` do veredito, que a extensão mostra como
-   etiquetas. Se o LLM falhar, segue só com o trecho original e `termos` vazio.
+   etiquetas. Se o LLM falhar, a verificação para aqui com
+   `503 triagem_indisponivel`: sem tradução não há busca que preste.
 2. **Pesquisador** ([`pesquisador.py`](backend/src/agents/pesquisador.py)) — sem
    LLM. Para cada busca, consulta o cache e, se não houver, a OpenAlex; as
    buscas externas rodam em paralelo, no máximo `PESQUISADOR_CONCORRENCIA` (padrão
    `5`) ao mesmo tempo. Junta tudo intercalando por posição, sem repetir o mesmo
    DOI, e entrega até 5 trabalhos. Busca que falha só reduz a cobertura; todas
-   falhando viram `503 openalex_indisponivel`.
-3. **Juiz** — descarta trabalhos sem abstract ou DOI e decide o veredito.
+   falhando viram `503 openalex_indisponivel` — ou `502 busca_recusada`, quando
+   todas foram recusadas pela OpenAlex em vez de falharem por indisponibilidade.
+   Antes de montar o filtro, cada busca é saneada: vírgula e `|` viram espaço,
+   porque a OpenAlex os lê como sintaxe de filtro e não como texto.
+3. **Juiz** — descarta trabalhos sem abstract, sem DOI ou retratados e decide o
+   veredito com os três primeiros que sobrarem, com o abstract cortado em 900
+   caracteres. Os dois tetos são orçamento de token: no plano gratuito da Groq
+   a janela é de 8 mil tokens por minuto para as duas chamadas de LLM da
+   verificação.
 
 O veredito é gravado na tabela `veredito`, e o `id` devolvido é o que
 `POST /feedback` usa. Se a gravação falhar, o leitor recebe o mesmo veredito com
@@ -622,6 +647,76 @@ Depois volte ao Xcode e dê ⌘R. Não precisa reconverter.
 | Botão não aparece em site nenhum | acesso a sites está em *Perguntar*; mude para *Permitir em Todos os Sites* |
 | **Failed to fetch** só no Safari | o Safari é mais rígido com `localhost`; confirme que o uvicorn está de pé, teste `http://127.0.0.1:8000/health` no próprio Safari e, se for o caso, refaça o build com `WXT_API_BASE_URL=http://127.0.0.1:8000` |
 | `xcrun: error: unable to find utility` | Xcode não instalado ou `xcode-select` apontando para as CLT |
+
+## Deploy no Render (plano gratuito)
+
+O blueprint fica em [`render.yaml`](../render.yaml), na **raiz do repositório** —
+é onde o Render procura o arquivo; o `rootDir` é que aponta para
+`verificador/backend`.
+
+### 1. Banco: Neon, não o Postgres do Render
+
+O Postgres gratuito do Render **expira 30 dias depois de criado** (mais 14 de
+carência, e então os dados são apagados). Use o [Neon](https://neon.com), cujo
+plano gratuito não tem prazo: 0,5 GB e 100 CU-h/mês por projeto, sem cartão.
+
+Crie o projeto e copie a *connection string*. Não precisa editar nada nela: o
+backend normaliza a URL na inicialização (`normalizar_url_do_banco`, em
+`src/core/config/settings.py`), trocando `postgresql://` por
+`postgresql+asyncpg://` e `?sslmode=` por `?ssl=`. Sem essa tradução o asyncpg
+recusa a conexão com `unexpected keyword argument 'sslmode'`.
+
+### 2. Serviço: Blueprint
+
+No painel: **New** → **Blueprint** → aponte para o repositório. O Render lê o
+`render.yaml` e pede os valores marcados `sync: false`:
+
+| Variável | Valor |
+| :--- | :--- |
+| `DATABASE_URL` | a string do Neon, colada como veio |
+| `LLM_API_KEY` | <https://console.groq.com/keys> |
+| `OPENALEX_MAILTO` | e-mail de contato da equipe |
+| `OPENALEX_API_KEY` | <https://openalex.org/rest-api> |
+| `CORS_ORIGINS` | `["*"]` no começo; veja o passo 4 |
+
+O subdominio `.onrender.com` e global, entao o nome do `render.yaml` pode ja
+estar tomado: nesse caso o Render acrescenta um sufixo e a URL real so aparece
+no painel. A deste deploy e:
+
+```bash
+curl https://verificador-api-y9gl.onrender.com/health      # {"ok":true}
+```
+
+### 3. Migrações rodam na subida
+
+`preDeployCommand` exige plano pago, então o `dockerCommand` do blueprint roda
+`alembic upgrade head` antes do uvicorn. É idempotente, e no plano gratuito há
+uma única instância — não há duas migrações concorrentes. Ao subir de plano com
+mais de uma instância, mova isso para um pre-deploy de verdade.
+
+### 4. Extensão apontada para a API
+
+A base do back-end é lida **no build** (ver [Apontar o build para outro
+back-end](#apontar-o-build-para-outro-back-end)):
+
+```bash
+cd verificador/extensao
+WXT_API_BASE_URL=https://verificador-api-y9gl.onrender.com npm run zip
+```
+
+O ID da extensão só existe depois do primeiro upload na store, e é dele que sai
+a origem do CORS. Por isso a ordem é: subir com `CORS_ORIGINS=["*"]`, publicar a
+extensão, e então trocar para `["chrome-extension://<id>"]` no painel do Render.
+Deixar `["*"]` em produção permite que qualquer página chame a sua API.
+
+### O que o plano gratuito cobra em troca
+
+- **O serviço dorme após 15 min sem tráfego**, e a primeira requisição depois
+  disso leva **30–60 s** só para subir — antes de qualquer LLM. O Neon também
+  escala a zero após 5 min idle. Isso contradiz a baixa latência que o projeto
+  promete: **antes de apresentar, acorde os dois** com um `curl /health`.
+- São **750 horas de instância por mês** por workspace. Um serviço 24/7 usa
+  ~730 h e cabe; dois não cabem.
 
 ## Próxima migração
 

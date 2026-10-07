@@ -74,6 +74,10 @@ ORDENACOES: dict[str, str | None] = {
     "citacoes": "cited_by_count:desc",
     "ano": "publication_year:desc",
 }
+# Caracteres que a OpenAlex trata como sintaxe de filtro, e não como texto da
+# busca: `,` separa filtros e `|` separa valores. Ver `sanitizar_busca`.
+SEPARADORES_DE_FILTRO = (",", "|")
+
 SEM_TITULO = "(sem título)"
 
 VERSAO_AGENTE = "verificador-cientifico/0.1"
@@ -333,7 +337,7 @@ class ClienteOpenAlex:
         self, busca: str, quantidade: int | None, ordenar_por: str
     ) -> tuple[list[Trabalho], int]:
         """Uma requisição: devolve os trabalhos e quantos casaram ao todo."""
-        termo = busca.strip() if isinstance(busca, str) else ""
+        termo = sanitizar_busca(busca)
         if not termo:
             raise ValueError("a string de busca não pode ser vazia")
         if ordenar_por not in ORDENACOES:
@@ -558,11 +562,44 @@ def intercalar(
     return juntos
 
 
+def sanitizar_busca(busca: str) -> str:
+    """Tira da string o que a OpenAlex leria como sintaxe de filtro.
+
+    Dentro de `title_and_abstract.search`, dois caracteres não são texto para a
+    OpenAlex: a vírgula separa filtros e o `|` separa valores do mesmo filtro.
+    Os dois chegam aqui porque a busca nº 1 do Triador é o **trecho original**
+    (`montar_lista` em src/agents/triador.py), e prosa em português tem vírgula.
+
+    Cada um falha de um jeito, e nenhum dos dois é visível de fora:
+
+    - a vírgula é recusada na borda da API, com 400. Como a recusa conta como
+      busca falha, um trecho com vírgula podia derrubar a verificação inteira
+      com `openalex_indisponivel` — culpando a OpenAlex por estar no ar.
+    - o `|` passa calado e vira **OU**: `medula | espinhal nervoso` devolveu
+      12.660 trabalhos onde a conjunção devolve 352. Alargar a busca em
+      silêncio é pior do que falhar.
+
+    Escapar não serve: com a vírgula percent-encoded ou o valor entre aspas, a
+    API aceita e devolve zero, porque passa a exigir a vírgula literal no texto
+    do trabalho. Os dois viram espaço — que é o que separa palavras na busca,
+    e a busca é a conjunção das palavras.
+    """
+    if not isinstance(busca, str):
+        return ""
+    limpa = busca
+    for separador in SEPARADORES_DE_FILTRO:
+        limpa = limpa.replace(separador, " ")
+    # A troca por espaço cria espaço duplo: `"a, b"` -> `"a  b"`. Juntar aqui
+    # mantém a desduplicação de `normalizar_buscas` honesta, senão duas
+    # variações que só diferem na pontuação gastariam duas requisições.
+    return " ".join(limpa.split())
+
+
 def normalizar_buscas(buscas: Sequence[str]) -> list[str]:
-    """Limpa a lista antes de gastar requisição: apara, descarta vazia e repetida.
+    """Limpa a lista antes de gastar requisição: saneia, descarta vazia e repetida.
 
     Repetida acontece de verdade: o Triador pode gerar duas variações que, depois
-    de aparadas, são a mesma string — e seria uma ida à OpenAlex para nada.
+    de saneadas, são a mesma string — e seria uma ida à OpenAlex para nada.
     """
     if isinstance(buscas, str):
         # Engano fácil de cometer e caro de descobrir: iterar uma string daria
@@ -571,7 +608,7 @@ def normalizar_buscas(buscas: Sequence[str]) -> list[str]:
 
     limpas: list[str] = []
     for busca in buscas:
-        termo = busca.strip() if isinstance(busca, str) else ""
+        termo = sanitizar_busca(busca)
         if termo and termo not in limpas:
             limpas.append(termo)
     return limpas[:MAXIMO_DE_BUSCAS]

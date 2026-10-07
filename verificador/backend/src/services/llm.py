@@ -199,6 +199,28 @@ def _diagnostico_de_limite(resposta: httpx.Response | None) -> DiagnosticoDeLimi
     )
 
 
+def _limite_para_log(diagnostico: DiagnosticoDeLimite | None) -> str:
+    """O diagnóstico do 429 como sufixo `chave=valor`, ou vazio quando não houve.
+
+    Vazio quando não houve: a linha de log é lida por humano e por grep, e um
+    punhado de `limite_tipo=None` em toda chamada bem-sucedida treina os dois a
+    ignorar o campo justamente quando ele aparece preenchido.
+    """
+    if diagnostico is None:
+        return ""
+    campos = {
+        "limite_tipo": diagnostico.tipo,
+        "req_restantes_dia": diagnostico.requisicoes_restantes_dia,
+        "tokens_restantes_min": diagnostico.tokens_restantes_minuto,
+        "reinicio_req": diagnostico.reinicio_requisicoes,
+        "reinicio_tokens": diagnostico.reinicio_tokens,
+    }
+    presentes = " ".join(
+        f"{chave}={valor}" for chave, valor in campos.items() if valor is not None
+    )
+    return f" {presentes}" if presentes else ""
+
+
 class ProvedorCompativelComOpenAI:
     """Groq ou Gemini, pelo endpoint que imita a API da OpenAI."""
 
@@ -331,6 +353,12 @@ class _Andamento:
     tentativas: int = 0
     tokens_entrada: int | None = None
     tokens_saida: int | None = None
+    # O diagnóstico da última falha transitória que trouxe um, para que a linha
+    # de log diga *qual* limite barrou a chamada. Sem ele o log registra
+    # "indisponivel" e nada mais, e quem investiga não consegue distinguir a
+    # janela de tokens por minuto de uma cota diária esgotada ou do provedor
+    # fora do ar — três causas com três ações diferentes.
+    diagnostico_limite: "DiagnosticoDeLimite | None" = None
 
 
 def _validar(texto: str, schema: type[T]) -> T:
@@ -449,6 +477,8 @@ class ClienteLLM:
                 return await self.provedor.completar(**pedido)
             except FalhaTransitoria as falha:
                 ultima = falha
+                if falha.diagnostico_limite is not None:
+                    andamento.diagnostico_limite = falha.diagnostico_limite
                 if tentativa == self.max_tentativas:
                     break
                 await self._dormir(self._espera(tentativa, falha.retry_after))
@@ -469,7 +499,7 @@ class ClienteLLM:
         logger.log(
             nivel,
             "llm provedor=%s modelo=%s resultado=%s latencia_ms=%d "
-            "tokens_entrada=%s tokens_saida=%s tentativas=%d",
+            "tokens_entrada=%s tokens_saida=%s tentativas=%d%s",
             self.provedor.nome,
             self.provedor.modelo,
             resultado,
@@ -477,6 +507,7 @@ class ClienteLLM:
             andamento.tokens_entrada,
             andamento.tokens_saida,
             andamento.tentativas,
+            _limite_para_log(andamento.diagnostico_limite),
         )
 
     async def fechar(self) -> None:
