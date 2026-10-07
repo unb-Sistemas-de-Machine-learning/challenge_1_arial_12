@@ -25,22 +25,20 @@ export default defineConfig({
     host_permissions: permissoesDeHost(),
     ...(browser === "firefox"
       ? {
-          // Declara que a extensao nao coleta dados do usuario.
-          data_collection_permissions: { required: ["none"] },
           // O Firefox exige um id estavel para instalar temporariamente.
           browser_specific_settings: {
             gecko: {
               id: "verificador-cientifico@unb.local",
               strict_min_version: "115.0",
+              // Declara que a extensao nao coleta dados do usuario. A chave
+              // vive sob `gecko`: no topo do manifest o Firefox aceita, mas a
+              // validacao da AMO reprova o envio.
+              data_collection_permissions: { required: ["none"] },
             },
           },
         }
       : {}),
   }),
-
-  // O aviso e falso-positivo: o manifest do Firefox ja declara
-  // data_collection_permissions logo acima.
-  suppressWarnings: { firefoxDataCollection: true },
 
   // Abre direto a pagina de teste local ao rodar `npm run dev`.
   webExt: {

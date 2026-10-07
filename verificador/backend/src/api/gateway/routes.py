@@ -116,7 +116,9 @@ async def verificar(
         raise ErroGateway(CodigoErro.TRIAGEM_INDISPONIVEL)
 
     try:
-        pesquisa = await pesquisador.pesquisar(extracao.buscas)
+        pesquisa = await pesquisador.pesquisar(
+            extracao.buscas, busca_de_titulo=extracao.busca_de_titulo
+        )
     except OpenAlexRecusouABusca as erro:
         # Todas as buscas recusadas: a OpenAlex respondeu, e o problema é a
         # consulta. Dizer `openalex_indisponivel` aqui culparia um serviço que

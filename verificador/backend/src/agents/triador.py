@@ -77,6 +77,11 @@ MAX_PALAVRAS_POR_CAMPO = 5
 # mesmo termo canônico — "depression" como condição e como desfecho.
 MIN_PALAVRAS_POR_BUSCA = 2
 
+# Mínimo de palavras para um título citado valer uma requisição própria. Abaixo
+# disso não é título, é expressão genérica que o modelo pôs no campo errado --
+# e uma busca literal por duas palavras devolve o acervo da área, não o artigo.
+MIN_PALAVRAS_DO_TITULO = 3
+
 CAMPOS = ("condicao", "intervencao", "desfecho", "populacao")
 
 # Palavra de ligação não acrescenta sentido, e a busca da OpenAlex exige todas
@@ -122,9 +127,14 @@ NAO_TERMO = re.compile(r"[^\w\s-]|_", re.UNICODE)
 class TermosDeBusca(BaseModel):
     """O que o LLM devolve: um conceito por campo, vazio quando o trecho não diz.
 
-    Os quatro campos são obrigatórios na resposta. Campo vazio diz "o trecho não
-    traz isso"; campo ausente diz "o modelo não seguiu o formato", que é outra
-    coisa e precisa aparecer no log.
+    Os quatro campos de conceito são obrigatórios na resposta. Campo vazio diz
+    "o trecho não traz isso"; campo ausente diz "o modelo não seguiu o
+    formato", que é outra coisa e precisa aparecer no log.
+
+    `titulo_citado` é a exceção, e tem padrão: ele entrou depois dos outros
+    quatro, e um modelo que o omita está respondendo no formato antigo, não
+    errando. Degradar a verificação por causa disso trocaria um atalho que
+    falta por uma falha que não existe.
     """
 
     intervencao: str = Field(
@@ -142,6 +152,14 @@ class TermosDeBusca(BaseModel):
     populacao: str = Field(
         description="Em quem ou em quê (children, older adults, mice). Vazio se "
         "o trecho não disser."
+    )
+    titulo_citado: str = Field(
+        default="",
+        description="O título do artigo científico, copiado como está e no "
+        "idioma em que aparece, SÓ quando o trecho citar um título "
+        "explicitamente -- entre aspas, em itálico, ou apresentado como o "
+        "título do estudo. Vazio em todo outro caso, inclusive quando o trecho "
+        "só nomeia o periódico, o autor ou o ano.",
     )
 
 
@@ -407,6 +425,42 @@ class ExtracaoDoTriador:
     buscas: list[str]
     conceitos: list[str]
     degradada: bool = False
+    # A busca literal pelo título que o trecho citou, quando citou um. O
+    # Pesquisador a tenta antes dos conceitos e só cai nos eixos se ela não
+    # achar nada -- ver `AgentePesquisador.pesquisar`. `None` é o caso comum:
+    # matéria que não nomeia o artigo.
+    busca_de_titulo: str | None = None
+
+
+ASPAS = "\"'“”‘’«»"
+
+
+def busca_literal_de_titulo(
+    valor: object, max_tamanho: int = MAX_TAMANHO_VARIACAO
+) -> str | None:
+    """O título citado como string de busca, ou `None` se não servir como uma.
+
+    Aqui **não** entram glossário nem forma canônica, e a diferença é o ponto:
+    os quatro campos de conceito são termos que a literatura padroniza, e por
+    isso vale normalizá-los; um título é uma citação, e normalizar uma citação
+    é estragá-la. A limpeza se limita a espaço e aspas -- vírgula e `|` ficam
+    para `sanitizar_busca`, que é quem conhece a sintaxe da OpenAlex.
+
+    Recusa o que não vale a requisição: menos de `MIN_PALAVRAS_DO_TITULO`
+    palavras não é título, e acima de `max_tamanho` a busca não chegaria
+    inteira à API.
+    """
+    if not isinstance(valor, str):
+        return None
+    limpo = " ".join(valor.strip().strip(ASPAS).split())
+    if len(limpo.split()) < MIN_PALAVRAS_DO_TITULO:
+        return None
+    if len(limpo) > max_tamanho:
+        logger.warning(
+            "Título citado descartado por exceder %d caracteres", max_tamanho
+        )
+        return None
+    return limpo
 
 
 def conceitos_de(canonicos: Mapping[str, str]) -> list[str]:
@@ -553,9 +607,15 @@ class AgenteTriador:
             logger.exception("Erro inesperado no LLM ao extrair termos: %s", erro)
             return ExtracaoDoTriador(buscas=[trecho], conceitos=[], degradada=True)
 
+        titulo = busca_literal_de_titulo(
+            termos.titulo_citado, self.max_tamanho_variacao
+        )
+        if titulo:
+            logger.info("triador titulo_citado=%r", titulo)
         return ExtracaoDoTriador(
             buscas=self.montar_lista(trecho, termos),
             conceitos=conceitos_de(canonizar_termos(termos, self.glossario)),
+            busca_de_titulo=titulo,
         )
 
     async def extrair_buscas(self, trecho: str) -> list[str]:

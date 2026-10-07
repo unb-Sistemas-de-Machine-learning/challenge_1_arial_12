@@ -465,3 +465,123 @@ async def test_o_mesmo_nao_julgavel_em_duas_buscas_conta_uma_vez() -> None:
 
     assert [t.id for t in resultado.trabalhos] == ["W2"]
     assert resultado.nao_julgaveis == 1
+
+
+# --- Atalho pelo título citado -----------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_titulo_que_acha_responde_sozinho_e_os_eixos_nao_rodam() -> None:
+    """A economia é o ponto: uma requisição no lugar de todas as dos eixos."""
+    openalex = OpenAlexFalsa(
+        {
+            "Polylaminin promotes regeneration": corpo(registro("WTITULO")),
+            "polylaminin": corpo(registro("WCONCEITO")),
+        }
+    )
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(
+        ["polylaminin"], busca_de_titulo="Polylaminin promotes regeneration"
+    )
+
+    assert [t.id for t in resultado.trabalhos] == ["WTITULO"]
+    assert resultado.veio_do_titulo is True
+    assert resultado.falha_do_titulo is None
+    assert openalex.recebidas == ["Polylaminin promotes regeneration"]
+
+
+@pytest.mark.asyncio
+async def test_titulo_sem_resultado_cai_nos_conceitos() -> None:
+    openalex = OpenAlexFalsa(
+        {"Titulo que nao existe": corpo(), "polylaminin": corpo(registro("WCONCEITO"))}
+    )
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(
+        ["polylaminin"], busca_de_titulo="Titulo que nao existe"
+    )
+
+    assert [t.id for t in resultado.trabalhos] == ["WCONCEITO"]
+    assert resultado.veio_do_titulo is False
+    # Não achar nada não é falha de ninguém: não há o que reportar.
+    assert resultado.falha_do_titulo is None
+
+
+@pytest.mark.asyncio
+async def test_titulo_que_acha_so_nao_julgavel_cai_nos_conceitos() -> None:
+    """Achar um artigo que o Juiz não sabe ler é o mesmo que não achar."""
+    openalex = OpenAlexFalsa(
+        {
+            "Um titulo qualquer": corpo(registro("WSEMABS", abstract=False)),
+            "polylaminin": corpo(registro("WCONCEITO")),
+        }
+    )
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(
+        ["polylaminin"], busca_de_titulo="Um titulo qualquer"
+    )
+
+    assert [t.id for t in resultado.trabalhos] == ["WCONCEITO"]
+    assert resultado.veio_do_titulo is False
+
+
+@pytest.mark.asyncio
+async def test_titulo_que_falha_na_openalex_nao_derruba_a_pesquisa() -> None:
+    """O atalho é otimização: a falha dele vai ao log, não ao leitor."""
+    openalex = OpenAlexFalsa(
+        {"Um titulo qualquer": 500, "polylaminin": corpo(registro("WCONCEITO"))}
+    )
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(
+        ["polylaminin"], busca_de_titulo="Um titulo qualquer"
+    )
+
+    assert [t.id for t in resultado.trabalhos] == ["WCONCEITO"]
+    assert resultado.veio_do_titulo is False
+    assert resultado.falha_do_titulo is not None
+    # Separado de `falhas`, que é o que decide se a pesquisa inteira fracassou.
+    assert resultado.falhas == {}
+
+
+@pytest.mark.asyncio
+async def test_titulo_que_acha_responde_mesmo_sem_busca_de_conceito() -> None:
+    """Trecho com menos de dois conceitos, mas que nomeia o artigo: tem resposta.
+
+    Sem o atalho esta lista vazia era `ValueError`, e a rota respondia
+    `entrada_invalida` -- para um trecho que trazia a referência exata.
+    """
+    openalex = OpenAlexFalsa({"Um titulo bem especifico": corpo(registro("WTITULO"))})
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(
+        [], busca_de_titulo="Um titulo bem especifico"
+    )
+
+    assert [t.id for t in resultado.trabalhos] == ["WTITULO"]
+    assert resultado.veio_do_titulo is True
+
+
+@pytest.mark.asyncio
+async def test_titulo_passa_pelo_cache_como_qualquer_busca() -> None:
+    openalex = OpenAlexFalsa({"Titulo em cache": corpo(registro("WTITULO"))})
+    cache = CacheEmMemoria()
+    agente = AgentePesquisador(openalex.cliente(), cache=cache)
+
+    primeiro = await agente.pesquisar([], busca_de_titulo="Titulo em cache")
+    segundo = await agente.pesquisar([], busca_de_titulo="Titulo em cache")
+
+    assert [t.id for t in primeiro.trabalhos] == ["WTITULO"]
+    assert [t.id for t in segundo.trabalhos] == ["WTITULO"]
+    # Uma requisição para as duas pesquisas: a segunda saiu do cache.
+    assert openalex.recebidas == ["Titulo em cache"]
+    assert cache.gravacoes == ["Titulo em cache"]
+
+
+@pytest.mark.asyncio
+async def test_sem_titulo_o_comportamento_e_o_de_antes() -> None:
+    """A assinatura nova não muda quem não passa o parâmetro."""
+    openalex = OpenAlexFalsa({"polylaminin": corpo(registro("WCONCEITO"))})
+
+    resultado = await AgentePesquisador(openalex.cliente()).pesquisar(["polylaminin"])
+
+    assert [t.id for t in resultado.trabalhos] == ["WCONCEITO"]
+    assert resultado.veio_do_titulo is False
+    assert resultado.falha_do_titulo is None

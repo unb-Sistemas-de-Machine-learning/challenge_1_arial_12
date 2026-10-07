@@ -2,7 +2,7 @@
   "name": "verificador-cientifico",
   "description": "Verifica se um trecho selecionado tem estudo publicado por tras",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "wxt",

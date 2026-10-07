@@ -96,7 +96,7 @@ export function htmlVeredito(veredito: Veredito, trecho: string): string {
     : "";
 
   const controlesFeedback = veredito.id != null
-    ? `<div class="vc-feedback" data-veredicto-id="${veredito.id}">
+    ? `<div class="vc-feedback" data-veredicto-id="${Number(veredito.id)}">
          <p>Este resultado foi útil?</p>
          <div class="vc-feedback-botoes">
            <button type="button" class="vc-feedback-btn vc-feedback-sim" data-util="true">Sim</button>
