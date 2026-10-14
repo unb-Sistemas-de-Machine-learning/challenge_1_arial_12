@@ -1,5 +1,8 @@
 # Verificador Científico - Equipe Arial 12
 
+# Links do projeto
+ Extensão Firefox: (Link para baixar)[https://addons.mozilla.org/pt-BR/firefox/addon/verificador-cientifico/]
+
 ## Sobre o Projeto
 
 O Verificador Científico da Equipe Arial 12 é uma extensão de navegador focada exclusivamente na validação de alegações e citações científicas presentes em matérias da internet. Ao selecionar um trecho de texto, o sistema utiliza Inteligência Artificial para consultar rapidamente bases de dados científicas e classificar o nível de confiança da referência utilizada. A engenharia por trás da ferramenta prioriza a baixa latência de inferência, garantindo que o processamento seja ágil e o veredito — que indica se há embasamento sólido, exagero ou ausência de estudos — apareça na tela do usuário em tempo real.
